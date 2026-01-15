@@ -1,22 +1,24 @@
+import { useState } from "react";
 import Layout from "../../components/Layout";
-import { useEffect, useState } from "react";
-import { fetchProducts } from "../../api/agro.api";
+import AddProduct from "./AddProduct";
+import ProductCatalog from "./ProductCatalog";
 
 export default function AgroDashboard() {
-  const [products, setProducts] = useState<any[]>([]);
-
-  useEffect(() => {
-    fetchProducts().then(setProducts);
-  }, []);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const onAdded = () => setRefreshKey((k) => k + 1);
 
   return (
-    <Layout role="agro">
+    <Layout role="agrovet">
       <h1 className="text-2xl font-bold mb-4">Agro-vet Dashboard</h1>
-      {products.map((p) => (
-        <div key={p.id} className="bg-white p-3 rounded shadow mb-2">
-          {p.name} – KES {p.price}
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <AddProduct onAdded={onAdded} />
         </div>
-      ))}
+        <div>
+          <ProductCatalog refreshKey={refreshKey} />
+        </div>
+      </div>
     </Layout>
   );
 }

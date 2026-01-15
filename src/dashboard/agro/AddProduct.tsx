@@ -1,13 +1,21 @@
 import { useState } from "react";
 import api from "../../api/axios";
 
-export default function AddProduct() {
+type Props = { onAdded?: () => void };
+
+export default function AddProduct({ onAdded }: Props) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
 
   const submit = async () => {
-    await api.post("/agro/products", { name, price });
-    alert("Product added");
+    try {
+      await api.post("/agro/products", { name, price });
+      alert("Product added");
+      if (onAdded) onAdded();
+    } catch (err: any) {
+      console.error("Add product failed", err);
+      alert(err?.response?.data?.error || "Failed to add product");
+    }
   };
 
   return (

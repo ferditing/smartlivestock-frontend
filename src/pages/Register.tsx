@@ -31,7 +31,7 @@ export default function Register() {
           <option value="">Select role</option>
           <option value="farmer">Farmer</option>
           <option value="vet">Vet</option>
-          <option value="agro">Agro-vet</option>
+          <option value="agrovet">Agro-vet</option>
         </select>
         <input
           type="password"

@@ -11,7 +11,7 @@ export default function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/farmer" element={<RequireRole role="farmer"><FarmerDashboard /></RequireRole>} />
       <Route path="/vet" element={<RequireRole role="vet"><VetDashboard /></RequireRole>} />
-      <Route path="/agro" element={<RequireRole role="agro"><AgroDashboard /></RequireRole>} />
+      <Route path="/agrovet" element={<RequireRole role="agrovet"><AgroDashboard /></RequireRole>} />
     </Routes>
   );
 }

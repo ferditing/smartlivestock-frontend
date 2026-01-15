@@ -1,6 +1,11 @@
 import api from "./axios";
 
 export const fetchPendingReports = async () => {
-  const res = await api.get("/vet/reports/pending");
-  return res.data;
+  try {
+    const res = await api.get("/reports/incoming");
+    return res.data;
+  } catch (err) {
+    console.warn("fetchPendingReports failed", err);
+    return [];
+  }
 };

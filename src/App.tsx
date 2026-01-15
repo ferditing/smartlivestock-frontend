@@ -60,9 +60,9 @@ export default function App() {
 
       {/* Agro-vet */}
       <Route
-        path="/agro"
+        path="/agrovet"
         element={
-          <RequireRole role="agro">
+          <RequireRole role="agrovet">
             <AgroDashboard />
           </RequireRole>
         }

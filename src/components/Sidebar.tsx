@@ -19,8 +19,8 @@ export default function Sidebar({ role }: { role: string }) {
         </Link>
       )}
 
-      {role === "agro" && (
-        <Link to="/agro" className="block py-2 hover:bg-green-600 rounded">
+      {role === "agrovet" && (
+        <Link to="/agrovet" className="block py-2 hover:bg-green-600 rounded">
           Products
         </Link>
       )}
