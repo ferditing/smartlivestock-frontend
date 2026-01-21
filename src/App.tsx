@@ -4,6 +4,8 @@ import RequireRole from "./auth/RequireRole";
 // Pages
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ProviderProducts from "./pages/ProviderProducts";
+
 
 // Dashboards
 import FarmerDashboard from "./dashboard/farmer/FarmerDashboard";
@@ -67,6 +69,15 @@ export default function App() {
           </RequireRole>
         }
       />
+      <Route
+  path="/providers/:id"
+  element={
+    <RequireRole role="farmer">
+      <ProviderProducts />
+    </RequireRole>
+  }
+/>
+
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/login" />} />

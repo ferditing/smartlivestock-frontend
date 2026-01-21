@@ -1,12 +1,12 @@
 import api from "./axios";
 
-export const fetchProducts = async (providerId?: number) => {
-  try {
-    const url = providerId ? `/agro/products?provider_id=${providerId}` : "/agro/products";
-    const res = await api.get(url);
-    return res.data;
-  } catch (err) {
-    console.warn("fetchProducts failed", err);
-    return [];
-  }
+export const fetchMyProducts = async () => {
+  const res = await api.get("/agro/products/mine");
+  return res.data;
 };
+
+export const fetchProviderProducts = async (providerId: number) => {
+  const res = await api.get(`/agro/products/by-provider/${providerId}`);
+  return res.data;
+};
+

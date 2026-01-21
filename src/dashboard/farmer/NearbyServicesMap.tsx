@@ -1,8 +1,10 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { fetchNearbyServices } from "../../api/farmer.api";
 import type { LatLngExpression } from "leaflet";
 import L from "leaflet";
+
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
@@ -14,38 +16,80 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
+type Provider = {
+  id: number;
+  name: string;
+  provider_type: "vet" | "agrovet";
+  lat: number;
+  lng: number;
+  distance_m: number;
+};
+
 export default function NearbyServicesMap() {
+  const navigate = useNavigate();
   const [pos, setPos] = useState<LatLngExpression | null>(null);
-  const [services, setServices] = useState<any[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition((p) => {
-      const coords: LatLngExpression = [
-        p.coords.latitude,
-        p.coords.longitude,
-      ];
-      setPos(coords);
-      fetchNearbyServices(coords[0], coords[1]).then(setServices);
-    });
+    if (!navigator.geolocation) {
+      setError("Geolocation not supported");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (p) => {
+        const coords: LatLngExpression = [
+          p.coords.latitude,
+          p.coords.longitude,
+        ];
+
+        setPos(coords);
+
+        const data = await fetchNearbyServices(
+          p.coords.latitude,
+          p.coords.longitude
+        );
+
+        setProviders(data);
+      },
+      () => {
+        setError("Unable to access location");
+      }
+    );
   }, []);
 
-  if (!pos) return <p>Loading map…</p>;
+  if (error) return <p className="text-red-600">{error}</p>;
+  if (!pos) return <p>Loading nearby services…</p>;
 
   return (
     <MapContainer center={pos} zoom={13} className="h-[400px] rounded">
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
+      {/* Farmer location marker */}
       <Marker position={pos}>
-        <Popup>Your Location</Popup>
+        <Popup>Your location</Popup>
       </Marker>
-      {services.map((s) => (
-        <Marker key={s.id} position={[s.lat, s.lng]}>
-          <Popup>
-            <b>{s.name}</b><br />
-            {s.role}<br />
-            {s.phone}
-          </Popup>
-        </Marker>
-      ))}
+
+      {/* Provider markers */}
+      {providers
+        .filter((p) => p.lat != null && p.lng != null)
+        .map((p) => (
+          <Marker key={p.id} position={[p.lat, p.lng]}>
+            <Popup>
+              <b>{p.name}</b><br />
+              Type: {p.provider_type}<br />
+              Distance: {(p.distance_m / 1000).toFixed(1)} km
+              <br />
+              <button
+                className="text-blue-600 underline mt-2"
+                onClick={() => navigate(`/providers/${p.id}`)}
+              >
+                View Products
+              </button>
+            </Popup>
+          </Marker>
+        ))}
     </MapContainer>
   );
 }

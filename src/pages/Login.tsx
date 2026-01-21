@@ -1,5 +1,7 @@
+// FILE: src/pages/Login.tsx
+
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import api from "../api/axios";
 
 export default function Login() {
@@ -8,24 +10,13 @@ export default function Login() {
   const navigate = useNavigate();
 
   const login = async () => {
-    try {
-      console.log("login payload", { email, password });
-      const res = await api.post("/auth/login", { email, password });
-      const token = res.data?.token;
-      const role = res.data?.role ?? res.data?.user?.role;
+    const res = await api.post("/auth/login", { email, password });
 
-      if (token) localStorage.setItem("token", token);
-      if (role) localStorage.setItem("role", role);
+    const { token, user } = res.data;
+    localStorage.setItem("token", token);
+    localStorage.setItem("role", user.role);
 
-      if (role) navigate(`/${role}`);
-      else {
-        console.warn('Login succeeded but no role returned', res.data);
-        navigate('/');
-      }
-    } catch (err: any) {
-      console.error(err);
-      alert(err?.response?.data?.error || err?.message || "Login failed");
-    }
+    navigate(`/${user.role}`);
   };
 
   return (
@@ -33,28 +24,16 @@ export default function Login() {
       <div className="bg-white p-6 rounded shadow w-80">
         <h2 className="text-xl font-bold mb-4">Login</h2>
 
-        <input
-          className="border p-2 w-full mb-2"
-          placeholder="Email"
-          value={email}
-          autoComplete="email"
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          type="password"
-          className="border p-2 w-full mb-4"
-          placeholder="Password"
-          value={password}
-          autoComplete="current-password"
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <input className="border p-2 w-full mb-2" placeholder="Email" onChange={e => setEmail(e.target.value)} />
+        <input type="password" className="border p-2 w-full mb-4" placeholder="Password" onChange={e => setPassword(e.target.value)} />
 
-        <button
-          onClick={login}
-          className="w-full bg-green-600 text-white py-2 rounded"
-        >
+        <button onClick={login} className="w-full bg-green-600 text-white py-2 rounded">
           Login
         </button>
+
+        <p className="text-sm mt-4 text-center">
+          No account? <Link to="/register" className="text-blue-600">Register</Link>
+        </p>
       </div>
     </div>
   );
