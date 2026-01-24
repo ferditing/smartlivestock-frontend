@@ -1,28 +1,33 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import RequireRole from "./auth/RequireRole";
 
-// Pages
+// Auth pages
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProviderProducts from "./pages/ProviderProducts";
 
-
 // Dashboards
 import FarmerDashboard from "./dashboard/farmer/FarmerDashboard";
+import FarmerInventory from "./dashboard/farmer/FarmerInventory";
 import VetDashboard from "./dashboard/vet/VetDashboard";
 import IncomingCases from "./dashboard/vet/IncomingCases";
 import CaseDetails from "./dashboard/vet/CaseDetails";
 import AgroDashboard from "./dashboard/agro/AgroDashboard";
 
+// Profiles
+import FarmerProfile from "./profile/FarmerProfile";
+import VetProfile from "./profile/VetProfile";
+import AgroProfile from "./profile/AgroProfile";
+
 export default function App() {
   return (
     <Routes>
-      {/* Public */}
+      {/* ---------------- PUBLIC ---------------- */}
       <Route path="/" element={<Navigate to="/login" />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      {/* Farmer */}
+      {/* ---------------- FARMER ---------------- */}
       <Route
         path="/farmer"
         element={
@@ -32,12 +37,39 @@ export default function App() {
         }
       />
 
-      {/* Vet */}
+      <Route
+        path="/farmer/animals"
+        element={
+          <RequireRole role="farmer">
+            <FarmerInventory />
+          </RequireRole>
+        }
+      />
+
+      <Route
+        path="/farmer/profile"
+        element={
+          <RequireRole role="farmer">
+            <FarmerProfile />
+          </RequireRole>
+        }
+      />
+
+      {/* ---------------- VET ---------------- */}
       <Route
         path="/vet"
         element={
           <RequireRole role="vet">
             <VetDashboard />
+          </RequireRole>
+        }
+      />
+
+      <Route
+        path="/vet/profile"
+        element={
+          <RequireRole role="vet">
+            <VetProfile />
           </RequireRole>
         }
       />
@@ -60,7 +92,7 @@ export default function App() {
         }
       />
 
-      {/* Agro-vet */}
+      {/* ---------------- AGROVET ---------------- */}
       <Route
         path="/agrovet"
         element={
@@ -69,17 +101,27 @@ export default function App() {
           </RequireRole>
         }
       />
+
       <Route
-  path="/providers/:id"
-  element={
-    <RequireRole role="farmer">
-      <ProviderProducts />
-    </RequireRole>
-  }
-/>
+        path="/agrovet/profile"
+        element={
+          <RequireRole role="agrovet">
+            <AgroProfile />
+          </RequireRole>
+        }
+      />
 
+      {/* ---------------- FARMER → PROVIDER PRODUCTS ---------------- */}
+      <Route
+        path="/providers/:id"
+        element={
+          <RequireRole role="farmer">
+            <ProviderProducts />
+          </RequireRole>
+        }
+      />
 
-      {/* Fallback */}
+      {/* ---------------- FALLBACK ---------------- */}
       <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   );

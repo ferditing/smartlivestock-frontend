@@ -1,8 +1,8 @@
 import api from "./axios";
 
-export const fetchNearbyServices = async (lat: number, lng: number) => {
+export const fetchNearbyServices = async (lat: number, lng: number, radius = 10000) => {
   // backend exposes nearby providers at /api/providers/nearby
-  const res = await api.get(`/providers/nearby?lat=${lat}&lng=${lng}`);
+  const res = await api.get(`/providers/nearby?lat=${lat}&lng=${lng}&radius=${radius}`);
   return res.data;
 };
 

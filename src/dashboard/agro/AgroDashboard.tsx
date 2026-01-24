@@ -16,7 +16,7 @@ export default function AgroDashboard() {
           <AddProduct onAdded={onAdded} />
         </div>
         <div>
-          <ProductCatalog refreshKey={refreshKey} />
+          <ProductCatalog isOwner={true} refreshKey={refreshKey} />
         </div>
       </div>
     </Layout>

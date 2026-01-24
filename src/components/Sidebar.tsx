@@ -5,6 +5,12 @@ export default function Sidebar({ role }: { role: string }) {
     <aside className="w-64 bg-green-700 text-white min-h-screen p-4">
       <h2 className="text-xl font-bold mb-6">SmartLivestock</h2>
 
+      {role && (
+        <Link to={`/${role}/profile`} className="block py-2 hover:bg-green-600 rounded">
+          Profile
+        </Link>
+      )}
+      
       {role === "farmer" && (
         <>
           <Link to="/farmer" className="block py-2 hover:bg-green-600 rounded">
@@ -13,9 +19,36 @@ export default function Sidebar({ role }: { role: string }) {
         </>
       )}
 
+      {role === "farmer" && (
+        <>
+          <Link to="/farmer/animals" className="block py-2 hover:bg-green-600 rounded">
+            My Animals
+          </Link>
+        </>
+      )}
+      {role === "farmer" && (
+        <>
+          <Link to="/farmer/profile" className="block py-2 hover:bg-green-600 rounded">
+            My Profile
+          </Link>
+        </>
+      )}
+
+      
+
       {role === "vet" && (
         <Link to="/vet" className="block py-2 hover:bg-green-600 rounded">
           Cases
+        </Link>
+      )}
+      {role === "vet" && (
+        <Link to="/vet" className="block py-2 hover:bg-green-600 rounded">
+          Dashboard
+        </Link>
+      )}
+      {role === "vet" && (
+        <Link to="/vet" className="block py-2 hover:bg-green-600 rounded">
+          VetProfile
         </Link>
       )}
 
@@ -23,7 +56,21 @@ export default function Sidebar({ role }: { role: string }) {
         <Link to="/agrovet" className="block py-2 hover:bg-green-600 rounded">
           Products
         </Link>
+        
       )}
+      {role === "agrovet" && (
+        <Link to="/agrovet" className="block py-2 hover:bg-green-600 rounded">
+          Dashboard
+        </Link>
+        
+      )}
+      {role === "agrovet" && (
+        <Link to="/agrovet" className="block py-2 hover:bg-green-600 rounded">
+          Agro Profile
+        </Link>
+        
+      )}
+      
     </aside>
   );
 }

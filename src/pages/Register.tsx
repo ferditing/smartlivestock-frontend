@@ -19,17 +19,22 @@ export default function Register() {
   const [form, setForm] = useState<any>({});
   const [location, setLocation] = useState<LocationState>({});
   const [gpsTried, setGpsTried] = useState(false);
+  const [gpsStatus, setGpsStatus] = useState<"idle" | "requesting" | "granted" | "denied">("idle");
 
   // 🔁 Try GPS only for vet/agrovet
   useEffect(() => {
     if (form.role === "vet" || form.role === "agrovet") {
-      detectLocation();
+      // don't auto-request if user hasn't interacted — show button instead
+      // but if earlier attempt failed, keep status
+      if (gpsStatus === "granted") detectLocation();
     }
   }, [form.role]);
 
   const detectLocation = () => {
-    if (!navigator.geolocation || gpsTried) return;
+    if (!navigator.geolocation) return alert('Geolocation not supported in your browser');
+    if (gpsTried) return;
     setGpsTried(true);
+    setGpsStatus('requesting');
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
@@ -37,27 +42,58 @@ export default function Register() {
         const lng = pos.coords.longitude;
 
         setLocation((prev) => ({ ...prev, lat, lng }));
+        setGpsStatus('granted');
 
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=jsonv2&accept-language=en`
           );
           const data = await res.json();
           const addr = data.address || {};
 
+          // helpful debug when mapping fails
+          console.debug('nominatim reverse', data);
+
+          // normalize and attempt to match to kenyaData keys
+          const norm = (s?: string) => (s || "").toLowerCase().replace(/\s+county$/i, '').replace(/\s+/g, ' ').trim();
+          const addrCountyRaw = addr.county || addr.region || addr.state || addr.county_district || '';
+          const addrSubRaw = addr.state_district || addr.county_district || addr.suburb || addr.town || addr.village || '';
+
+          const countyMatch = Object.keys(kenyaData).find(k => {
+            const nk = norm(k);
+            const na = norm(addrCountyRaw);
+            return nk === na || nk.includes(na) || na.includes(nk);
+          });
+
+          let chosenCounty = countyMatch || (addrCountyRaw ? addrCountyRaw.replace(/\s*County$/i, '').trim() : undefined);
+
+          // try to match sub-county within chosen county
+          let chosenSub: string | undefined = undefined;
+          if (chosenCounty && kenyaData[chosenCounty]) {
+            const subs = kenyaData[chosenCounty];
+            const matchedSub = subs.find(s => {
+              const ns = norm(s);
+              const na = norm(addrSubRaw);
+              return ns === na || ns.includes(na) || na.includes(ns);
+            });
+            chosenSub = matchedSub || undefined;
+          }
+
           setLocation((prev) => ({
             ...prev,
-            county: addr.county,
-            sub_county: addr.state_district,
-            locality: addr.village || addr.town || addr.suburb,
+            county: chosenCounty || prev.county,
+            sub_county: chosenSub || prev.sub_county || (addrSubRaw || undefined),
+            locality: addr.village || addr.town || addr.suburb || addr.hamlet || prev.locality,
           }));
-        } catch {
+        } catch (err) {
+          console.warn('reverse geocode failed', err);
           // Silent fail → dropdown fallback
         }
       },
-      () => {
-        // GPS failed → fallback UI will handle
-      }
+      (err) => {
+        setGpsStatus('denied');
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   };
 
@@ -103,16 +139,41 @@ export default function Register() {
 
         <select
           className="border p-2 w-full mb-2"
-          onChange={(e) => setForm({ ...form, role: e.target.value })}
+          onChange={(e) => {
+            const role = e.target.value;
+            setForm({ ...form, role });
+            // auto-prompt for high-accuracy GPS when registering as a provider
+            if (role === 'vet' || role === 'agrovet') {
+              // reset so detectLocation will prompt
+              setGpsTried(false);
+              detectLocation();
+            }
+          }}
         >
           <option value="">Select role</option>
           <option value="farmer">Farmer</option>
           <option value="vet">Vet</option>
           <option value="agrovet">Agro-vet</option>
         </select>
-
         {showLocationFallback && (
           <>
+            <div className="mb-2">
+              <button
+                type="button"
+                className="bg-green-600 text-white px-3 py-1 rounded mr-2"
+                onClick={() => {
+                  setGpsTried(false);
+                  detectLocation();
+                }}
+              >
+                Use my current location
+              </button>
+
+              {gpsStatus === 'requesting' && <span className="text-sm text-gray-600 ml-2">Requesting location…</span>}
+              {gpsStatus === 'granted' && <span className="text-sm text-green-600 ml-2">Location found</span>}
+              {gpsStatus === 'denied' && <span className="text-sm text-red-600 ml-2">Location permission denied — choose from dropdown</span>}
+            </div>
+
             <select
               className="border p-2 w-full mb-2"
               value={location.county || ""}

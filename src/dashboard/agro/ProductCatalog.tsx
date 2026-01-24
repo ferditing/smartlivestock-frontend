@@ -7,9 +7,10 @@ import {
 type Props = {
   providerId?: number;
   isOwner?: boolean;
+  refreshKey?: number;
 };
 
-export default function ProductCatalog({ providerId, isOwner }: Props) {
+export default function ProductCatalog({ providerId, isOwner, refreshKey }: Props) {
   const [products, setProducts] = useState<any[]>([]);
 
   useEffect(() => {
@@ -18,7 +19,7 @@ export default function ProductCatalog({ providerId, isOwner }: Props) {
     } else if (providerId) {
       fetchProviderProducts(providerId).then(setProducts);
     }
-  }, [providerId, isOwner]);
+  }, [providerId, isOwner, refreshKey]);
 
   if (!products.length) {
     return <div className="text-gray-500">No products available.</div>;
