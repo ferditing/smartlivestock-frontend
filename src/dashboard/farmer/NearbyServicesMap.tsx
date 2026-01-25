@@ -82,6 +82,9 @@ function ClusterLayer({ providers, onNavigate }: { providers: Provider[]; onNavi
           </div>
         `;
         marker.bindPopup(popupHtml);
+        marker.bindTooltip(p.name, { direction: 'top', offset: [0, -10] });
+        marker.on('mouseover', () => marker.openPopup());
+        marker.on('mouseout', () => marker.closePopup());
 
         // navigate when marker itself is clicked (works even if popup link not used)
         marker.on('click', () => onNavigate(p.id));
