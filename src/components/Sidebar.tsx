@@ -33,8 +33,11 @@ export default function Sidebar({ role }: { role: string }) {
           </Link>
         </>
       )}
-
-      
+      <>
+        <Link to="/clinical-records" className="block py-2 hover:bg-green-600 rounded">
+          Clinical Records
+        </Link>
+      </>
 
       {role === "vet" && (
         <Link to="/vet" className="block py-2 hover:bg-green-600 rounded">
