@@ -1,5 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import RequireRole from "./auth/RequireRole";
+import ClinicalRecordsList from './dashboard/ClinicalRecords/ClinicalRecordsList';
+import { ClinicalRecordDetail } from './dashboard/ClinicalRecords/ClinicalRecordDetail';
+import { CreateClinicalRecord } from './dashboard/ClinicalRecords/CreateClinicalRecord';
 
 // Auth pages
 import Login from "./pages/Login";
@@ -120,6 +123,40 @@ export default function App() {
           </RequireRole>
         }
       />
+
+      <Route 
+        path="/clinical-records" 
+        element={
+          <RequireRole role="any">
+            <ClinicalRecordsList />
+          </RequireRole>
+        } 
+      />
+      <Route 
+        path="/clinical-records/:recordId" 
+        element={
+          <RequireRole role="any">
+            <ClinicalRecordDetail />
+          </RequireRole>
+        } 
+      />
+      <Route 
+        path="/clinical-records/new" 
+        element={
+          <RequireRole role="any">
+            <CreateClinicalRecord />
+          </RequireRole>
+        } 
+      />
+      <Route 
+        path="/animals/:animalId/clinical-records/new" 
+        element={
+          <RequireRole role="any">
+            <CreateClinicalRecord />
+          </RequireRole>
+        } 
+      />
+
 
       {/* ---------------- FALLBACK ---------------- */}
       <Route path="*" element={<Navigate to="/login" />} />
