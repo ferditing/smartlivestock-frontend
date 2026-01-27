@@ -33,6 +33,13 @@ export default function Sidebar({ role }: { role: string }) {
           </Link>
         </>
       )}
+      {role === "farmer" && (
+        <>
+          <Link to="/farmer/appointments/new" className="block py-2 hover:bg-green-600 rounded">
+            Book Appointment
+          </Link>
+        </>
+      )}
       <>
         <Link to="/clinical-records" className="block py-2 hover:bg-green-600 rounded">
           Clinical Records
@@ -45,13 +52,13 @@ export default function Sidebar({ role }: { role: string }) {
         </Link>
       )}
       {role === "vet" && (
-        <Link to="/vet" className="block py-2 hover:bg-green-600 rounded">
-          Dashboard
+        <Link to="/vet/appointments" className="block py-2 hover:bg-green-600 rounded">
+          Appointments
         </Link>
       )}
       {role === "vet" && (
         <Link to="/vet" className="block py-2 hover:bg-green-600 rounded">
-          VetProfile
+          Dashboard
         </Link>
       )}
 
@@ -64,12 +71,6 @@ export default function Sidebar({ role }: { role: string }) {
       {role === "agrovet" && (
         <Link to="/agrovet" className="block py-2 hover:bg-green-600 rounded">
           Dashboard
-        </Link>
-        
-      )}
-      {role === "agrovet" && (
-        <Link to="/agrovet" className="block py-2 hover:bg-green-600 rounded">
-          Agro Profile
         </Link>
         
       )}

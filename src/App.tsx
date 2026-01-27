@@ -3,6 +3,10 @@ import RequireRole from "./auth/RequireRole";
 import ClinicalRecordsList from './dashboard/ClinicalRecords/ClinicalRecordsList';
 import { ClinicalRecordDetail } from './dashboard/ClinicalRecords/ClinicalRecordDetail';
 import { CreateClinicalRecord } from './dashboard/ClinicalRecords/CreateClinicalRecord';
+import ViewAppointments from "./dashboard/ClinicalRecords/ViewAppointments";
+import BookAppointment from "./dashboard/ClinicalRecords/BookAppointment";
+// ...
+// ...
 
 // Auth pages
 import Login from "./pages/Login";
@@ -57,6 +61,12 @@ export default function App() {
           </RequireRole>
         }
       />
+      <Route 
+      path="/farmer/appointments/new" 
+      element={
+      <RequireRole role="farmer">
+        <BookAppointment />
+        </RequireRole>} />
 
       {/* ---------------- VET ---------------- */}
       <Route
@@ -64,6 +74,20 @@ export default function App() {
         element={
           <RequireRole role="vet">
             <VetDashboard />
+          </RequireRole>
+        }
+      />
+      <Route 
+      path="/vet/appointments"
+       element={
+       <RequireRole role="vet">
+        <ViewAppointments />
+      </RequireRole>} />
+      <Route
+        path="/vet/appointments/new"
+        element={
+          <RequireRole role="vet">
+            <BookAppointment />
           </RequireRole>
         }
       />
