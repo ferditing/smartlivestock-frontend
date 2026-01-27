@@ -31,7 +31,7 @@ type Provider = {
 // filter state type for the UI
 type ProviderType = "all" | "vet" | "agrovet";
 
-function ClusterLayer({ providers, onNavigate }: { providers: Provider[]; onNavigate: (id: number) => void; }) {
+function ClusterLayer({ providers, onNavigate, role }: { providers: Provider[]; onNavigate: (id: number, action?: string) => void; role: string | null; }) {
   const map = useMap();
 
   useEffect(() => {
@@ -73,33 +73,49 @@ function ClusterLayer({ providers, onNavigate }: { providers: Provider[]; onNavi
         }
 
         const marker = L.marker([lat, lng]);
+        const roleStr = role ? String(role).toLowerCase() : "";
+        const isProviderVet = p.provider_type === 'vet';
+        const linkText = isProviderVet ? 'Book Appointment' : 'View Products';
+        const action = isProviderVet ? 'book' : 'view';
         const popupHtml = `
           <div>
             <b>${p.name}</b><br/>
             Type: ${p.provider_type}<br/>
             Distance: ${(p.distance_m / 1000).toFixed(1)} km<br/>
-            <a href="#" data-provider-id="${p.id}" style="color:#2563eb;text-decoration:underline;">View Products</a>
+            <a href="#" data-provider-id="${p.id}" data-action="${action}" style="color:#2563eb;text-decoration:underline;">${linkText}</a>
           </div>
         `;
-        marker.bindPopup(popupHtml);
+        // keep popup open until user closes it; open via click
+        marker.bindPopup(popupHtml, { autoClose: true, closeOnClick: false, closeButton: true });
         marker.bindTooltip(p.name, { direction: 'top', offset: [0, -10] });
-        marker.on('mouseover', () => marker.openPopup());
-        marker.on('mouseout', () => marker.closePopup());
 
-        // navigate when marker itself is clicked (works even if popup link not used)
-        marker.on('click', () => onNavigate(p.id));
+        // open popup on marker click (instead of immediate navigation)
+        marker.on('click', () => marker.openPopup());
 
-        // attach click handler to the popup link to avoid full page reload
+        // attach click handler to the popup using delegation to be robust
         marker.on('popupopen', () => {
           try {
             const popupEl = marker.getPopup()?.getElement();
             if (!popupEl) return;
-            const link = popupEl.querySelector('a[data-provider-id]') as HTMLAnchorElement | null;
-            if (!link) return;
-            const handler = (e: Event) => { e.preventDefault(); onNavigate(p.id); };
-            link.addEventListener('click', handler);
+
+            const delegatedHandler = (ev: Event) => {
+              const target = ev.target as HTMLElement | null;
+              if (!target) return;
+              const link = target.closest('a[data-provider-id]') as HTMLAnchorElement | null;
+              if (!link) return;
+              ev.preventDefault();
+              const idAttr = link.getAttribute('data-provider-id');
+              const actionAttr = link.getAttribute('data-action');
+              const idNum = idAttr ? Number(idAttr) : p.id;
+              onNavigate(idNum, actionAttr || undefined);
+            };
+
+            popupEl.addEventListener('click', delegatedHandler);
             // remove listener when popup closes to avoid leaks
-            marker.on('popupclose', () => link.removeEventListener('click', handler));
+            const removeOnClose = () => {
+              try { popupEl.removeEventListener('click', delegatedHandler); } catch (e) {}
+            };
+            marker.once('popupclose', removeOnClose);
           } catch (e) {}
         });
         group.addLayer(marker);
@@ -121,6 +137,7 @@ export default function NearbyServicesMap() {
   const [filterType, setFilterType] = useState<ProviderType>("all");
   const [providers, setProviders] = useState<Provider[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const role = typeof window !== 'undefined' ? localStorage.getItem('role') : null;
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -183,7 +200,28 @@ export default function NearbyServicesMap() {
         </Marker>
 
         {/* Provider markers (clustered via leaflet.markercluster) */}
-        <ClusterLayer providers={filteredProviders} onNavigate={(id) => navigate(`/providers/${id}`)} />
+        <ClusterLayer
+          providers={filteredProviders}
+          role={role}
+          onNavigate={(id, action) => {
+            const roleStr = role ? String(role).toLowerCase() : "";
+            if (action === 'book') {
+              if (roleStr === 'farmer') {
+                navigate(`/farmer/appointments/new?provider=${id}`);
+                return;
+              }
+              if (roleStr === 'vet') {
+                navigate(`/vet/appointments/new?provider=${id}`);
+                return;
+              }
+              // fallback: providers and other roles go to provider details
+              navigate(`/providers/${id}`);
+              return;
+            }
+            // default view products
+            navigate(`/providers/${id}`);
+          }}
+        />
       </MapContainer>
 
       {/* Provider list beneath the map */}
@@ -197,7 +235,12 @@ export default function NearbyServicesMap() {
                 <div className="text-sm text-gray-600">{p.provider_type} • {(p.distance_m/1000).toFixed(2)} km</div>
               </div>
               <div>
-                <button className="text-blue-600 underline" onClick={() => navigate(`/providers/${p.id}`)}>View</button>
+                {p.provider_type === 'vet' && (
+                  <button className="text-blue-600 underline" onClick={() => navigate(`/farmer/appointments/new?provider=${p.id}`)}>Book Apointment</button>
+                )}
+                {p.provider_type === 'agrovet' && (
+                  <button className="text-blue-600 underline" onClick={() => navigate(`/providers/${p.id}`)}>View</button>
+                )}
               </div>
             </li>
           ))}
