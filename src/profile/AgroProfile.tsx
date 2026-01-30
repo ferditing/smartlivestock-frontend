@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
+import Layout from "../components/Layout";
 
 type AgroMeta = {
     shop_name?: string;
@@ -37,7 +38,8 @@ export default function AgroProfile(){
     if (!user) return <p>Loading...</p>;
 
     return (
-        <div className="max-w-2xl mx-auto">
+        <Layout role= "agrovet">
+            <div className="max-w-2xl mx-auto">
             <h2 className="text-3xl font-extrabold mb-6 text-green-700">Agrovet Profile</h2>
 
             <div className="bg-white p-6 rounded-lg shadow space-y-4">
@@ -91,5 +93,6 @@ export default function AgroProfile(){
                 )}
             </div>
         </div>
+        </Layout>
     )
 }
