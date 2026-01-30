@@ -61,7 +61,13 @@ export default function FarmerInventory() {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <b className="text-lg">{a.species}</b>
-                                    <div className="text-sm text-gray-600">{a.breed || '-'} • Tag: {a.tag_id || '-'}</div>
+                                    <div className="text-sm text-gray-600">
+                                        {a.reg_no && <span className="font-semibold text-green-600">Reg No: {a.reg_no}</span>}
+                                        {a.reg_no && (a.breed || a.tag_id) && ' • '}
+                                        {a.breed && `Breed: ${a.breed}`}
+                                        {a.breed && a.tag_id && ' • '}
+                                        {a.tag_id && `Tag: ${a.tag_id}`}
+                                    </div>
                                 </div>
                                 <div className="text-sm text-gray-700 text-right">
                                     <div>Age: {a.age ?? '-' } yrs</div>

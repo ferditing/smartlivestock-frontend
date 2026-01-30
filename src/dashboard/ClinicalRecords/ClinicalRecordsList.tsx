@@ -30,11 +30,9 @@ export default function ClinicalRecordsList() {
       if (Array.isArray(recordsData)) {
         setRecords(recordsData);
       } else {
-        console.error('Expected array but got:', recordsData);
         setRecords([]);
       }
     } catch (err) {
-      console.error('Fetch error:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch records');
     } finally {
       setLoading(false);
