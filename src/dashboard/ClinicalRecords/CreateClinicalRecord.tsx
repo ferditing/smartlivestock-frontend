@@ -12,7 +12,6 @@ interface CreateClinicalRecordForm {
 }
 
 export const CreateClinicalRecord: React.FC = () => {
-  const { animalId } = useParams<{ animalId: string }>();
   const navigate = useNavigate();
   const [formData, setFormData] = useState<CreateClinicalRecordForm>({
     vetId: '',
@@ -27,18 +26,50 @@ export const CreateClinicalRecord: React.FC = () => {
   const [animals, setAnimals] = useState<any[]>([]);
   const [selectedAnimalId, setSelectedAnimalId] = useState<string>('');
 
+  const [searchMode, setSearchMode] = useState<'browse' | 'search'>('browse');
+  const [regNo, setRegNo] = useState('');
+  const [foundAnimal, setFoundAnimal] = useState<any>(null);
+
 
   const userRole = localStorage.getItem('role') || 'farmer';
+  const currentUserId = localStorage.getItem('userId');
 
+  const searchAnimalByRegNo = async () => {
+    if (!regNo.trim()) {
+      setError('Please enter a registration number');
+      return;
+    }
+
+    try {
+      const response = await axios.get(`/api/animal/search?reg_no=${encodeURIComponent(regNo)}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      
+      if (response.data) {
+        setFoundAnimal(response.data);
+        setSelectedAnimalId(String(response.data.id));
+        setError(null);
+      } else {
+        setError('No animal found with that registration number');
+        setFoundAnimal(null);
+      }
+    } catch (err) {
+      setError('Failed to find animal. Please check the registration number.');
+      setFoundAnimal(null);
+    }
+  };
   
   useEffect(() => {
+
+  if (userRole === 'vet' && currentUserId) {
+    setFormData(prev => ({ ...prev, vetId: currentUserId }));
+  }
     const fetchVets = async () => {
       try {
         const response = await axios.get('/api/users?role=vet', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
           });
         
-        console.log('Vets API response:', response.data);
         
         let vetsData = response.data;
         
@@ -49,11 +80,9 @@ export const CreateClinicalRecord: React.FC = () => {
         if (Array.isArray(vetsData)) {
           setVets(vetsData);
         } else {
-          console.error('Expected array but got:', vetsData);
           setVets([]);
         }
       } catch (err) {
-        console.error('Failed to fetch vets:', err);
         setVets([]);
       }
     };
@@ -66,11 +95,10 @@ export const CreateClinicalRecord: React.FC = () => {
         });
         setAnimals(response.data);
       } catch (err) {
-        console.error('Failed to fetch animals:', err);
       }
     };
     fetchAnimals();
-  }, []);
+  }, [userRole, currentUserId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -80,17 +108,61 @@ export const CreateClinicalRecord: React.FC = () => {
     }));
   };
 
+  const handleModeChange = (mode: 'browse' | 'search') => {
+    setSearchMode(mode);
+    setError(null);
+    if (mode === 'browse') {
+      setFoundAnimal(null);
+      setRegNo('');
+    } else {
+      setSelectedAnimalId('');
+    }
+  };
+  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
+  const finalVetId = userRole === 'vet' ? (currentUserId || 'TOKEN_ID'): formData.vetId;
+
+  if (userRole !== 'vet' && !finalVetId) {
+    setError('Missing attending vet information');
+    return;
+  }
+
+
+  let animalId: number | null = null;
+
+  if (searchMode === 'browse') {
+    animalId = selectedAnimalId ? Number(selectedAnimalId) : null;
+  } else {
+    animalId = foundAnimal ? Number(foundAnimal.id) : null;
+  }
+
+  if (!animalId || isNaN(animalId)) {
+    setError('Please select or search for an animal first');
+    return;
+  }
+  
+    if (isNaN(animalId) || animalId <= 0) {
+      setError('Invalid animal selected');
+      return;
+    }
+
+
+    setLoading(true);
+
     try {
-      const response = await axios.post(
-        `/api/clinical-records`,
+      await axios.post(
+        '/api/clinical-records',
         {
-          animalId: animalId || selectedAnimalId, 
-          ...formData
+        animalId: animalId,
+        ...(userRole !== 'vet' && {vetId: Number(finalVetId) }),
+        mlDiagnosis: formData.mlDiagnosis,
+        mlConfidence: formData.mlConfidence || 0,
+        vetDiagnosis: formData.vetDiagnosis || null,
+        notes: formData.notes || null
         },
         {
           headers: {
@@ -98,13 +170,14 @@ export const CreateClinicalRecord: React.FC = () => {
           }
         }
       );
-      console.log('Clinical record created:', response.data);
-      navigate('/clinical-records');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create clinical record');
-    } finally {
-      setLoading(false);
-    }
+
+    navigate('/clinical-records');
+  } catch (err: any) {
+    const errorMsg = err.response?.data?.error || err.message || 'Failed to create clinical record';
+    setError(errorMsg);
+  } finally {
+    setLoading(false);
+  }
   };
 
   return (
@@ -119,44 +192,113 @@ export const CreateClinicalRecord: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} className="bg-white shadow-md rounded px-8 pt-6 pb-8">
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="animalId">
-            Animal *
-          </label>
-          <select
-            id="animalId"
-            value={selectedAnimalId}
-            onChange={(e) => setSelectedAnimalId(e.target.value)}
-            required
-            className="shadow border rounded w-full py-2 px-3 text-gray-700"
-          >
-            <option value="">Select an animal</option>
-            {animals.map(animal => (
-              <option key={animal.id} value={animal.id}>
-                {animal.species} - {animal.tag_id || animal.id}
-              </option>
-            ))}
-          </select>
-        </div>
+            <div className="mb-6">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Find Animal By:
+            </label>
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => handleModeChange('browse')}
+                className={`px-4 py-2 rounded ${
+                  searchMode === 'browse' 
+                    ? 'bg-green-600 text-white' 
+                    : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                Browse Animals
+              </button>
+              <button
+                type="button"
+                onClick={() => handleModeChange('search')}
+                className={`px-4 py-2 rounded ${
+                  searchMode === 'search' 
+                    ? 'bg-green-600 text-white' 
+                    : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                Registration Number
+              </button>
+            </div>
+          </div>
+
+                    {searchMode === 'browse' ? (
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="animalId">
+                Animal *
+              </label>
+              <select
+                id="animalId"
+                value={selectedAnimalId}
+                onChange={(e) => setSelectedAnimalId(e.target.value)}
+                required
+                className="shadow border rounded w-full py-2 px-3 text-gray-700"
+              >
+                <option value="">Select an animal</option>
+                {animals.map(animal => (
+                  <option key={animal.id} value={animal.id}>
+                    {animal.species} - {animal.tag_id || animal.id}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="regNo">
+                Registration Number *
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  id="regNo"
+                  value={regNo}
+                  onChange={(e) => setRegNo(e.target.value)}
+                  placeholder="e.g., COW/1/26"
+                  className="shadow border rounded flex-1 py-2 px-3 text-gray-700"
+                />
+                <button
+                  type="button"
+                  onClick={searchAnimalByRegNo}
+                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                >
+                  Search
+                </button>
+              </div>
+              {foundAnimal && (
+                <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded">
+                  <p className="text-sm text-green-800">
+                    ✓ Found: <strong>{foundAnimal.species}</strong> - {foundAnimal.breed || 'No breed'} 
+                    (Tag: {foundAnimal.tag_id})
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
           <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="vetId">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
               Attending Vet *
             </label>
-            <select
-              id="vetId"
-              name="vetId"
-              value={formData.vetId}
-              onChange={handleChange}
-              required
-              className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            >
-              <option value="">Select a vet</option>
-              {vets.map(vet => (
-                <option key={vet.id} value={vet.id}>
-                  {vet.name}
-                </option>
-              ))}
-            </select>
+            {userRole === 'vet' ? (
+              <div className="p-2 bg-gray-100 border rounded text-gray-600">
+                You are recording this as the attending veterinarian.
+              </div>
+            ) : (
+              <select
+                id="vetId"
+                name="vetId"
+                value={formData.vetId}
+                onChange={handleChange}
+                required
+                className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none"
+              >
+                <option value="">Select a vet</option>
+                {vets.map(vet => (
+                  <option key={vet.id} value={vet.id}>
+                    {vet.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           <div className="mb-4">
@@ -169,7 +311,7 @@ export const CreateClinicalRecord: React.FC = () => {
               name="mlDiagnosis"
               value={formData.mlDiagnosis}
               onChange={handleChange}
-              placeholder="e.g., East Coast Fever"
+              placeholder="e.g., Anthrax"
               required
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             />
@@ -226,7 +368,7 @@ export const CreateClinicalRecord: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="bg-green-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
+              className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
             >
               {loading ? 'Creating...' : 'Create Clinical Record'}
             </button>
