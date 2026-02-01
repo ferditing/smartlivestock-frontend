@@ -10,6 +10,7 @@ interface ClinicalRecord {
     name: string;
     type: string;
     breed: string;
+    reg_no: string;
   };
   vet: {
     id: string;
@@ -109,6 +110,12 @@ export const ClinicalRecordDetail: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Breed</p>
               <p className="text-lg font-medium">{record.animal.breed || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Registration Number</p>
+              <p className="text-lg font-bold text-green-700">
+                {record.animal.reg_no || 'N/A'}
+              </p>
             </div>
           </div>
         </div>
