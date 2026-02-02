@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { reportSymptom } from "../../api/farmer.api";
-import { mlHealth, predict } from "../../api/ml.api";
+import { mlHealth, predict, predictFromText } from "../../api/ml.api";
 
 const DEFAULT_ANIMALS = ["Cow", "Goat", "Sheep", "Pig", "Chicken", "Calf"];
 
@@ -12,6 +12,8 @@ export default function ReportSymptom() {
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [availableSymptoms, setAvailableSymptoms] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [freeText, setFreeText] = useState<string>("");
+  const [textLoading, setTextLoading] = useState(false);
 
   useEffect(() => {
     // try to fetch model features to build symptom list and animal list
@@ -22,7 +24,8 @@ export default function ReportSymptom() {
         const animalKeys = feats
           .filter((f) => f.startsWith("animal_"))
           .map((f) => f.replace(/^animal_/, "").replace(/_/g, " "))
-          .map((s) => s.charAt(0).toUpperCase() + s.slice(1));
+          .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+          .filter((s) => s.toLowerCase() !== "buffalo");
 
         if (animalKeys.length) {
           setAnimals(animalKeys);
@@ -53,11 +56,21 @@ export default function ReportSymptom() {
         symptoms,
       };
 
-      // call ML service for immediate prediction
-      const ml = await predict(payload);
-
-      // show friendly message
-      alert(`Prediction: ${ml.predicted_label} (confidence ${Math.round(ml.confidence * 100)}%)\nAdvice: Visit an agrovet/veterinary clinic immediately.`);
+      // If the user selected symptom buttons, use the text/NLP endpoint
+      if (symptoms && symptoms.length > 0) {
+        const textPayload = {
+          animal: animal.toLowerCase(),
+          symptom_text: symptoms.join(', '),
+          age: age ? Number(age) : 0,
+          body_temperature: temp ? Number(temp) : 0,
+        };
+        const ml = await predictFromText(textPayload);
+        alert(`Prediction: ${ml.predicted_disease || ml.predicted_label} (confidence ${Math.round((ml.confidence ?? ml.confidence) * 100)}%)\nAdvice: Visit an agrovet/veterinary clinic immediately.`);
+      } else {
+        // call ML service for immediate prediction with structured features
+        const ml = await predict(payload);
+        alert(`Prediction: ${ml.predicted_label} (confidence ${Math.round(ml.confidence * 100)}%)\nAdvice: Visit an agrovet/veterinary clinic immediately.`);
+      }
 
       // persist report to backend (store symptom_text)
       const symptomText = symptoms.length ? symptoms.join(", ") : "";
@@ -70,9 +83,53 @@ export default function ReportSymptom() {
     }
   };
 
+  const submitText = async () => {
+    if (!freeText.trim()) return alert('Please type symptoms to predict');
+    setTextLoading(true);
+    try {
+      const payload = {
+        animal: animal.toLowerCase(),
+        symptom_text: freeText,
+        age: age ? Number(age) : 0,
+        body_temperature: temp ? Number(temp) : 0,
+      };
+
+      const ml = await predictFromText(payload);
+
+      alert(
+        `Prediction: ${ml.predicted_disease || ml.predicted_label} (confidence ${Math.round(
+          (ml.confidence ?? ml.confidence) * 100,
+        )}%)\nAdvice: Visit an agrovet/veterinary clinic immediately.`,
+      );
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.message || 'Failed to get prediction from text');
+    } finally {
+      setTextLoading(false);
+    }
+  };
+
   return (
     <div className="bg-white p-4 rounded shadow">
       <h2 className="font-bold mb-2">Report Symptoms</h2>
+
+      <div className="mb-3">
+        <label className="block mb-1">Or type symptoms (free text)</label>
+        <textarea
+          className="border p-2 w-full mb-2"
+          rows={3}
+          placeholder="e.g. high fever, coughing and loss of appetite"
+          value={freeText}
+          onChange={(e) => setFreeText(e.target.value)}
+        />
+        <button
+          className="bg-blue-600 text-white px-3 py-1 rounded"
+          onClick={submitText}
+          disabled={textLoading}
+        >
+          {textLoading ? 'Predicting…' : 'Predict from Text'}
+        </button>
+      </div>
 
       <label className="block mb-1">Animal</label>
       <select className="border p-2 w-full mb-2" value={animal} onChange={(e) => setAnimal(e.target.value)}>
