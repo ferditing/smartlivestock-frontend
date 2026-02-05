@@ -1,6 +1,14 @@
 import { Link } from "react-router-dom";
+import { logout } from "../auth/auth";
 
 export default function Sidebar({ role }: { role: string }) {
+
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to logout?")) {
+      logout();
+    }
+  };
+
   return (
     <aside className="w-64 bg-green-700 text-white min-h-screen p-4">
       <h2 className="text-xl font-bold mb-6">SmartLivestock</h2>
@@ -74,6 +82,17 @@ export default function Sidebar({ role }: { role: string }) {
         </Link>
         
       )}
+
+
+      <div className="border-t border-green-600 pt-4 mt-4">
+        <button
+          onClick={handleLogout}
+          className="w-full py-2 px-4 bg-red-600 hover:bg-red-700 rounded text-white font-medium"
+        >
+          Logout
+        </button>
+      </div>
+      
       
     </aside>
   );
