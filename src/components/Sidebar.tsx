@@ -1,99 +1,158 @@
-import { Link } from "react-router-dom";
+// Sidebar.tsx - Updated
+import { Link, useLocation } from "react-router-dom";
 import { logout } from "../auth/auth";
+import { useToast } from "../context/ToastContext";
+import {
+  LayoutDashboard,
+  Users,
+  Calendar,
+  FileText,
+  ShoppingBag,
+  User,
+  LogOut,
+  Home,
+  PawPrint,
+  Stethoscope,
+  Package
+} from "lucide-react";
+import ProductCatalog from "../dashboard/agro/ProductCatalog";
 
-export default function Sidebar({ role }: { role: string }) {
+export default function Sidebar({ role, onNavClick }: { role: string; onNavClick?: () => void }) {
+  const location = useLocation();
+  const { addToast } = useToast();
 
   const handleLogout = () => {
-    if (window.confirm("Are you sure you want to logout?")) {
-      logout();
-    }
+    logout();
+    addToast('success', 'Logged Out', 'You have been logged out successfully');
   };
 
+  const handleNavClick = (callback?: () => void) => {
+    callback?.();
+    onNavClick?.();
+  };
+
+  const isActive = (path: string) => {
+    return location.pathname === path || location.pathname.startsWith(path + '/');
+  };
+
+  const menuItems = [
+    // Common items
+    {
+      to: `/${role}/profile`,
+      label: "Profile",
+      icon: <User className="w-5 h-5" />,
+      show: true
+    },
+    
+    // Farmer items
+    {
+      to: "/farmer",
+      label: "Dashboard",
+      icon: <LayoutDashboard className="w-5 h-5" />,
+      show: role === "farmer"
+    },
+    {
+      to: "/farmer/animals",
+      label: "My Animals",
+      icon: <PawPrint className="w-5 h-5" />,
+      show: role === "farmer"
+    },
+    {
+      to: "/farmer/appointments/new",
+      label: "Book Appointment",
+      icon: <Calendar className="w-5 h-5" />,
+      show: role === "farmer"
+    },
+    
+    // Vet items
+    {
+      to: "/vet",
+      label: "Dashboard",
+      icon: <LayoutDashboard className="w-5 h-5" />,
+      show: role === "vet"
+    },
+    {
+      to: "/vet/cases",
+      label: "Cases",
+      icon: <Stethoscope className="w-5 h-5" />,
+      show: role === "vet"
+    },
+    {
+      to: "/vet/appointments",
+      label: "Appointments",
+      icon: <Calendar className="w-5 h-5" />,
+      show: role === "vet"
+    },
+    
+    // Agrovet items
+    {
+      to: "/agrovet",
+      label: "Dashboard",
+      icon: <LayoutDashboard className="w-5 h-5" />,
+      show: role === "agrovet"
+    },
+    {
+      to: "/agrovet/products",
+      label: "Products",
+      icon: <Package className="w-5 h-5" />,
+      show: role === "agrovet"
+    },
+    
+    // Common clinical records
+    {
+      to: "/clinical-records",
+      label: "Clinical Records",
+      icon: <FileText className="w-5 h-5" />,
+      show: true
+    }
+  ];
+
   return (
-    <aside className="w-64 bg-green-700 text-white min-h-screen p-4">
-      <h2 className="text-xl font-bold mb-6">SmartLivestock</h2>
+    <aside className="flex flex-col w-64 bg-gradient-to-b from-green-700 to-green-800 text-white h-screen">
+      <div className="p-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+            <PawPrint className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold">SmartLivestock</h2>
+            <p className="text-green-200 text-sm">Livestock Management</p>
+          </div>
+        </div>
+      </div>
 
-      {role && (
-        <Link to={`/${role}/profile`} className="block py-2 hover:bg-green-600 rounded">
-          Profile
-        </Link>
-      )}
-      
-      {role === "farmer" && (
-        <>
-          <Link to="/farmer" className="block py-2 hover:bg-green-600 rounded">
-            Dashboard
-          </Link>
-        </>
-      )}
+      <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+        {menuItems
+          .filter(item => item.show)
+          .map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              onClick={() => handleNavClick()}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                isActive(item.to)
+                  ? "bg-white/20 text-white shadow-inner"
+                  : "hover:bg-white/10 text-green-100 hover:text-white"
+              }`}
+            >
+              {item.icon}
+              <span className="font-medium">{item.label}</span>
+            </Link>
+          ))}
+      </nav>
 
-      {role === "farmer" && (
-        <>
-          <Link to="/farmer/animals" className="block py-2 hover:bg-green-600 rounded">
-            My Animals
-          </Link>
-        </>
-      )}
-      {role === "farmer" && (
-        <>
-          <Link to="/farmer/profile" className="block py-2 hover:bg-green-600 rounded">
-            My Profile
-          </Link>
-        </>
-      )}
-      {role === "farmer" && (
-        <>
-          <Link to="/farmer/appointments/new" className="block py-2 hover:bg-green-600 rounded">
-            Book Appointment
-          </Link>
-        </>
-      )}
-      <>
-        <Link to="/clinical-records" className="block py-2 hover:bg-green-600 rounded">
-          Clinical Records
-        </Link>
-      </>
-
-      {role === "vet" && (
-        <Link to="/vet" className="block py-2 hover:bg-green-600 rounded">
-          Cases
-        </Link>
-      )}
-      {role === "vet" && (
-        <Link to="/vet/appointments" className="block py-2 hover:bg-green-600 rounded">
-          Appointments
-        </Link>
-      )}
-      {role === "vet" && (
-        <Link to="/vet" className="block py-2 hover:bg-green-600 rounded">
-          Dashboard
-        </Link>
-      )}
-
-      {role === "agrovet" && (
-        <Link to="/agrovet" className="block py-2 hover:bg-green-600 rounded">
-          Products
-        </Link>
-        
-      )}
-      {role === "agrovet" && (
-        <Link to="/agrovet" className="block py-2 hover:bg-green-600 rounded">
-          Dashboard
-        </Link>
-        
-      )}
-
-
-      <div className="border-t border-green-600 pt-4 mt-4">
+      <div className="p-4 border-t border-green-600/50">
         <button
-          onClick={handleLogout}
-          className="w-full py-2 px-4 bg-red-600 hover:bg-red-700 rounded text-white font-medium"
+          onClick={() => {
+            handleLogout();
+            handleNavClick();
+          }}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white font-medium transition-colors duration-200"
         >
+          <LogOut className="w-5 h-5" />
           Logout
         </button>
       </div>
-      
-      
     </aside>
   );
 }

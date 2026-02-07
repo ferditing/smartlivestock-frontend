@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import RequireRole from "./auth/RequireRole";
+import { ToastProvider } from "./context/ToastContext";
 import ClinicalRecordsList from './dashboard/ClinicalRecords/ClinicalRecordsList';
 import { ClinicalRecordDetail } from './dashboard/ClinicalRecords/ClinicalRecordDetail';
 import { CreateClinicalRecord } from './dashboard/ClinicalRecords/CreateClinicalRecord';
@@ -12,6 +13,7 @@ import BookAppointment from "./dashboard/ClinicalRecords/BookAppointment";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProviderProducts from "./pages/ProviderProducts";
+import Layout from "./components/Layout";
 
 // Dashboards
 import FarmerDashboard from "./dashboard/farmer/FarmerDashboard";
@@ -20,6 +22,7 @@ import VetDashboard from "./dashboard/vet/VetDashboard";
 import IncomingCases from "./dashboard/vet/IncomingCases";
 import CaseDetails from "./dashboard/vet/CaseDetails";
 import AgroDashboard from "./dashboard/agro/AgroDashboard";
+import ProductCatalog from "./dashboard/agro/ProductCatalog";
 
 // Profiles
 import FarmerProfile from "./profile/FarmerProfile";
@@ -28,7 +31,8 @@ import AgroProfile from "./profile/AgroProfile";
 
 export default function App() {
   return (
-    <Routes>
+    <ToastProvider>
+      <Routes>
       {/* ---------------- PUBLIC ---------------- */}
       <Route path="/" element={<Navigate to="/login" />} />
       <Route path="/login" element={<Login />} />
@@ -180,10 +184,22 @@ export default function App() {
           </RequireRole>
         } 
       />
+      <Route 
+        path="/agrovet/products" 
+        element={
+          <RequireRole role="agrovet">
+            <Layout role="agrovet">
+              <ProductCatalog isOwner={true} />
+            </Layout>
+          </RequireRole>
+        } 
+      />
+      
 
 
       {/* ---------------- FALLBACK ---------------- */}
       <Route path="*" element={<Navigate to="/login" />} />
-    </Routes>
+      </Routes>
+    </ToastProvider>
   );
 }

@@ -1,19 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Layout from '../../components/Layout';
+import { useToast } from '../../context/ToastContext';
+import {
+  ArrowLeft,
+  FileText,
+  User,
+  Activity,
+  Search,
+  Loader2,
+  Calendar,
+  Stethoscope,
+  AlertCircle,
+  CheckCircle
+} from 'lucide-react';
 
-interface CreateClinicalRecordForm {
-  vetId: string;
-  mlDiagnosis: string;
-  mlConfidence: number;
-  vetDiagnosis: string;
-  notes: string;
-}
+// ... (interfaces remain the same)
 
 export const CreateClinicalRecord: React.FC = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState<CreateClinicalRecordForm>({
+  const [formData, setFormData] = useState({
     vetId: '',
     mlDiagnosis: '',
     mlConfidence: 0,
@@ -21,25 +28,25 @@ export const CreateClinicalRecord: React.FC = () => {
     notes: ''
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [vets, setVets] = useState<any[]>([]);
   const [animals, setAnimals] = useState<any[]>([]);
   const [selectedAnimalId, setSelectedAnimalId] = useState<string>('');
-
   const [searchMode, setSearchMode] = useState<'browse' | 'search'>('browse');
   const [regNo, setRegNo] = useState('');
   const [foundAnimal, setFoundAnimal] = useState<any>(null);
-
+  const [searchLoading, setSearchLoading] = useState(false);
+  const { addToast } = useToast();
 
   const userRole = localStorage.getItem('role') || 'farmer';
   const currentUserId = localStorage.getItem('userId');
 
   const searchAnimalByRegNo = async () => {
     if (!regNo.trim()) {
-      setError('Please enter a registration number');
+      addToast('error', 'Validation Error', 'Please enter a registration number');
       return;
     }
 
+    setSearchLoading(true);
     try {
       const response = await axios.get(`/api/animal/search?reg_no=${encodeURIComponent(regNo)}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
@@ -48,28 +55,29 @@ export const CreateClinicalRecord: React.FC = () => {
       if (response.data) {
         setFoundAnimal(response.data);
         setSelectedAnimalId(String(response.data.id));
-        setError(null);
+        addToast('success', 'Animal Found', 'Animal located successfully');
       } else {
-        setError('No animal found with that registration number');
+        addToast('warning', 'Not Found', 'No animal found with that registration number');
         setFoundAnimal(null);
       }
     } catch (err) {
-      setError('Failed to find animal. Please check the registration number.');
+      addToast('error', 'Search Failed', 'Failed to find animal. Please check the registration number.');
       setFoundAnimal(null);
+    } finally {
+      setSearchLoading(false);
     }
   };
   
   useEffect(() => {
+    if (userRole === 'vet' && currentUserId) {
+      setFormData(prev => ({ ...prev, vetId: currentUserId }));
+    }
 
-  if (userRole === 'vet' && currentUserId) {
-    setFormData(prev => ({ ...prev, vetId: currentUserId }));
-  }
     const fetchVets = async () => {
       try {
         const response = await axios.get('/api/users?role=vet', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-          });
-        
+        });
         
         let vetsData = response.data;
         
@@ -83,22 +91,24 @@ export const CreateClinicalRecord: React.FC = () => {
           setVets([]);
         }
       } catch (err) {
-        setVets([]);
+        addToast('warning', 'Veterinarians', 'Could not load veterinarian list');
       }
     };
-    fetchVets();
 
-      const fetchAnimals = async () => {
+    const fetchAnimals = async () => {
       try {
         const response = await axios.get('/api/animal', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         setAnimals(response.data);
       } catch (err) {
+        addToast('warning', 'Animals', 'Could not load animal list');
       }
     };
+
+    fetchVets();
     fetchAnimals();
-  }, [userRole, currentUserId]);
+  }, [userRole, currentUserId, addToast]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -110,7 +120,6 @@ export const CreateClinicalRecord: React.FC = () => {
 
   const handleModeChange = (mode: 'browse' | 'search') => {
     setSearchMode(mode);
-    setError(null);
     if (mode === 'browse') {
       setFoundAnimal(null);
       setRegNo('');
@@ -118,38 +127,44 @@ export const CreateClinicalRecord: React.FC = () => {
       setSelectedAnimalId('');
     }
   };
-  
+
+  const validateForm = () => {
+    if (!selectedAnimalId && !foundAnimal) {
+      addToast('error', 'Validation Error', 'Please select or search for an animal');
+      return false;
+    }
+
+    if (userRole !== 'vet' && !formData.vetId) {
+      addToast('error', 'Validation Error', 'Please select an attending veterinarian');
+      return false;
+    }
+
+    if (!formData.mlDiagnosis.trim()) {
+      addToast('error', 'Validation Error', 'ML diagnosis is required');
+      return false;
+    }
+
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    
+    if (!validateForm()) return;
 
-  const finalVetId = userRole === 'vet' ? (currentUserId || 'TOKEN_ID'): formData.vetId;
+    const finalVetId = userRole === 'vet' ? (currentUserId || 'TOKEN_ID') : formData.vetId;
 
-  if (userRole !== 'vet' && !finalVetId) {
-    setError('Missing attending vet information');
-    return;
-  }
-
-
-  let animalId: number | null = null;
-
-  if (searchMode === 'browse') {
-    animalId = selectedAnimalId ? Number(selectedAnimalId) : null;
-  } else {
-    animalId = foundAnimal ? Number(foundAnimal.id) : null;
-  }
-
-  if (!animalId || isNaN(animalId)) {
-    setError('Please select or search for an animal first');
-    return;
-  }
-  
-    if (isNaN(animalId) || animalId <= 0) {
-      setError('Invalid animal selected');
-      return;
+    let animalId: number | null = null;
+    if (searchMode === 'browse') {
+      animalId = selectedAnimalId ? Number(selectedAnimalId) : null;
+    } else {
+      animalId = foundAnimal ? Number(foundAnimal.id) : null;
     }
 
+    if (!animalId || isNaN(animalId)) {
+      addToast('error', 'Validation Error', 'Invalid animal selection');
+      return;
+    }
 
     setLoading(true);
 
@@ -157,12 +172,12 @@ export const CreateClinicalRecord: React.FC = () => {
       await axios.post(
         '/api/clinical-records',
         {
-        animalId: animalId,
-        ...(userRole !== 'vet' && {vetId: Number(finalVetId) }),
-        mlDiagnosis: formData.mlDiagnosis,
-        mlConfidence: formData.mlConfidence || 0,
-        vetDiagnosis: formData.vetDiagnosis || null,
-        notes: formData.notes || null
+          animalId: animalId,
+          ...(userRole !== 'vet' && { vetId: Number(finalVetId) }),
+          mlDiagnosis: formData.mlDiagnosis,
+          mlConfidence: formData.mlConfidence || 0,
+          vetDiagnosis: formData.vetDiagnosis || null,
+          notes: formData.notes || null
         },
         {
           headers: {
@@ -171,214 +186,354 @@ export const CreateClinicalRecord: React.FC = () => {
         }
       );
 
-    navigate('/clinical-records');
-  } catch (err: any) {
-    const errorMsg = err.response?.data?.error || err.message || 'Failed to create clinical record';
-    setError(errorMsg);
-  } finally {
-    setLoading(false);
-  }
+      addToast('success', 'Record Created', 'Clinical record created successfully');
+      setTimeout(() => {
+        navigate('/clinical-records');
+      }, 1000);
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.error || err.message || 'Failed to create clinical record';
+      addToast('error', 'Creation Failed', errorMsg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <Layout role={userRole}>
-      <div className="max-w-2xl mx-auto p-6">
-        <h2 className="text-2xl font-bold mb-6">Create Clinical Record</h2>
-        
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="bg-white shadow-md rounded px-8 pt-6 pb-8">
-            <div className="mb-6">
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              Find Animal By:
-            </label>
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={() => handleModeChange('browse')}
-                className={`px-4 py-2 rounded ${
-                  searchMode === 'browse' 
-                    ? 'bg-green-600 text-white' 
-                    : 'bg-gray-200 text-gray-700'
-                }`}
-              >
-                Browse Animals
-              </button>
-              <button
-                type="button"
-                onClick={() => handleModeChange('search')}
-                className={`px-4 py-2 rounded ${
-                  searchMode === 'search' 
-                    ? 'bg-green-600 text-white' 
-                    : 'bg-gray-200 text-gray-700'
-                }`}
-              >
-                Registration Number
-              </button>
+      <div className="max-w-4xl mx-auto p-4 md:p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <button
+            onClick={() => navigate('/clinical-records')}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Records
+          </button>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
+              <FileText className="w-6 h-6 text-green-600" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Create Clinical Record</h1>
+              <p className="text-gray-600">Document new animal health assessment</p>
             </div>
           </div>
+        </div>
 
-                    {searchMode === 'browse' ? (
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="animalId">
-                Animal *
-              </label>
-              <select
-                id="animalId"
-                value={selectedAnimalId}
-                onChange={(e) => setSelectedAnimalId(e.target.value)}
-                required
-                className="shadow border rounded w-full py-2 px-3 text-gray-700"
-              >
-                <option value="">Select an animal</option>
-                {animals.map(animal => (
-                  <option key={animal.id} value={animal.id}>
-                    {animal.species} - {animal.tag_id || animal.id}
-                  </option>
-                ))}
-              </select>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Animal Selection Card */}
+          <div className="card">
+            <div className="card-header">
+              <h2 className="text-lg font-semibold text-gray-900">1. Select Animal</h2>
+              <p className="text-sm text-gray-500">Choose the animal for this record</p>
             </div>
-          ) : (
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="regNo">
-                Registration Number *
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  id="regNo"
-                  value={regNo}
-                  onChange={(e) => setRegNo(e.target.value)}
-                  placeholder="e.g., COW/1/26"
-                  className="shadow border rounded flex-1 py-2 px-3 text-gray-700"
-                />
-                <button
-                  type="button"
-                  onClick={searchAnimalByRegNo}
-                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                >
-                  Search
-                </button>
+            
+            <div className="card-body space-y-6">
+              {/* Mode Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Find Animal By:
+                </label>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleModeChange('browse')}
+                    className={`px-4 py-3 rounded-lg transition-all duration-200 flex items-center gap-2 ${
+                      searchMode === 'browse' 
+                        ? 'bg-green-100 text-green-700 border-2 border-green-300' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-transparent'
+                    }`}
+                  >
+                    <User className="w-4 h-4" />
+                    Browse My Animals
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleModeChange('search')}
+                    className={`px-4 py-3 rounded-lg transition-all duration-200 flex items-center gap-2 ${
+                      searchMode === 'search' 
+                        ? 'bg-blue-100 text-blue-700 border-2 border-blue-300' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-2 border-transparent'
+                    }`}
+                  >
+                    <Search className="w-4 h-4" />
+                    Search by Registration
+                  </button>
+                </div>
               </div>
-              {foundAnimal && (
-                <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded">
-                  <p className="text-sm text-green-800">
-                    ✓ Found: <strong>{foundAnimal.species}</strong> - {foundAnimal.breed || 'No breed'} 
-                    (Tag: {foundAnimal.tag_id})
-                  </p>
+
+              {/* Browse Animals */}
+              {searchMode === 'browse' ? (
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                    <User className="w-4 h-4" />
+                    Select Animal *
+                  </label>
+                  <select
+                    value={selectedAnimalId}
+                    onChange={(e) => setSelectedAnimalId(e.target.value)}
+                    required={searchMode === 'browse'}
+                    className="select-field"
+                  >
+                    <option value="">Choose an animal...</option>
+                    {animals.map(animal => (
+                      <option key={animal.id} value={animal.id}>
+                        {animal.species} - {animal.tag_id || animal.name || `ID: ${animal.id}`}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedAnimalId && (
+                    <div className="mt-2 flex items-center gap-2 text-green-600">
+                      <CheckCircle className="w-4 h-4" />
+                      <span className="text-sm">Animal selected</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Search by Registration */
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                    <Search className="w-4 h-4" />
+                    Registration Number *
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={regNo}
+                      onChange={(e) => setRegNo(e.target.value)}
+                      placeholder="e.g., COW/1/26"
+                      className="input-field flex-1"
+                      disabled={searchLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={searchAnimalByRegNo}
+                      disabled={searchLoading}
+                      className="btn-primary flex items-center gap-2 whitespace-nowrap"
+                    >
+                      {searchLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Search className="w-4 h-4" />
+                      )}
+                      Search
+                    </button>
+                  </div>
+                  
+                  {searchLoading && (
+                    <div className="mt-2 flex items-center gap-2 text-gray-600">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-sm">Searching for animal...</span>
+                    </div>
+                  )}
+                  
+                  {foundAnimal && (
+                    <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-xl">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-green-100 rounded-lg">
+                          <CheckCircle className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-green-800">Animal Found!</h4>
+                          <div className="grid grid-cols-2 gap-2 mt-2">
+                            <div>
+                              <p className="text-xs text-gray-600">Species</p>
+                              <p className="font-medium">{foundAnimal.species}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-600">Breed</p>
+                              <p className="font-medium">{foundAnimal.breed || 'Unknown'}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-600">Tag ID</p>
+                              <p className="font-medium">{foundAnimal.tag_id || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-600">Registration</p>
+                              <p className="font-medium">{regNo}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              Attending Vet *
-            </label>
-            {userRole === 'vet' ? (
-              <div className="p-2 bg-gray-100 border rounded text-gray-600">
-                You are recording this as the attending veterinarian.
+          </div>
+
+          {/* Veterinarian Card */}
+          <div className="card">
+            <div className="card-header">
+              <h2 className="text-lg font-semibold text-gray-900">2. Attending Veterinarian</h2>
+              <p className="text-sm text-gray-500">Who is handling this case?</p>
+            </div>
+            
+            <div className="card-body">
+              {userRole === 'vet' ? (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Stethoscope className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-blue-800">You are the attending veterinarian</h4>
+                      <p className="text-sm text-blue-700 mt-1">
+                        This record will be created under your name as the primary veterinarian.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                    <User className="w-4 h-4" />
+                    Select Veterinarian *
+                  </label>
+                  <select
+                    value={formData.vetId}
+                    onChange={handleChange}
+                    name="vetId"
+                    required
+                    className="select-field"
+                  >
+                    <option value="">Choose a veterinarian...</option>
+                    {vets.map(vet => (
+                      <option key={vet.id} value={vet.id}>
+                        Dr. {vet.name} • {vet.specialization || 'General Veterinarian'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Diagnosis Card */}
+          <div className="card">
+            <div className="card-header">
+              <h2 className="text-lg font-semibold text-gray-900">3. Diagnosis Information</h2>
+              <p className="text-sm text-gray-500">Enter ML and clinical findings</p>
+            </div>
+            
+            <div className="card-body space-y-4">
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <Activity className="w-4 h-4" />
+                  ML Diagnosis *
+                </label>
+                <input
+                  type="text"
+                  name="mlDiagnosis"
+                  value={formData.mlDiagnosis}
+                  onChange={handleChange}
+                  placeholder="e.g., Anthrax, Mastitis, Foot and Mouth Disease"
+                  required
+                  className="input-field"
+                />
               </div>
-            ) : (
-              <select
-                id="vetId"
-                name="vetId"
-                value={formData.vetId}
-                onChange={handleChange}
-                required
-                className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none"
-              >
-                <option value="">Select a vet</option>
-                {vets.map(vet => (
-                  <option key={vet.id} value={vet.id}>
-                    {vet.name}
-                  </option>
-                ))}
-              </select>
-            )}
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <Activity className="w-4 h-4" />
+                  ML Confidence (%)
+                </label>
+                <div className="space-y-2">
+                  <input
+                    type="range"
+                    name="mlConfidence"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={formData.mlConfidence}
+                    onChange={handleChange}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">0%</span>
+                    <span className="text-lg font-bold text-gray-900">{formData.mlConfidence}%</span>
+                    <span className="text-sm text-gray-500">100%</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <Stethoscope className="w-4 h-4" />
+                  Veterinary Diagnosis (Optional)
+                </label>
+                <textarea
+                  name="vetDiagnosis"
+                  value={formData.vetDiagnosis}
+                  onChange={handleChange}
+                  placeholder="Enter your clinical diagnosis based on examination..."
+                  rows={3}
+                  className="input-field"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <FileText className="w-4 h-4" />
+                  Clinical Notes (Optional)
+                </label>
+                <textarea
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleChange}
+                  placeholder="Additional notes, observations, treatment recommendations..."
+                  rows={4}
+                  className="input-field"
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="mlDiagnosis">
-              ML Diagnosis *
-            </label>
-            <input
-              type="text"
-              id="mlDiagnosis"
-              name="mlDiagnosis"
-              value={formData.mlDiagnosis}
-              onChange={handleChange}
-              placeholder="e.g., Anthrax"
-              required
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="mlConfidence">
-              ML Confidence (%)
-            </label>
-            <input
-              type="number"
-              id="mlConfidence"
-              name="mlConfidence"
-              min="0"
-              max="100"
-              step="0.1"
-              value={formData.mlConfidence || ''}
-              onChange={handleChange}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="vetDiagnosis">
-              Vet Diagnosis
-            </label>
-            <textarea
-              id="vetDiagnosis"
-              name="vetDiagnosis"
-              value={formData.vetDiagnosis}
-              onChange={handleChange}
-              placeholder="Vet's clinical diagnosis"
-              rows={3}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            />
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="notes">
-              Notes
-            </label>
-            <textarea
-              id="notes"
-              name="notes"
-              value={formData.notes}
-              onChange={handleChange}
-              placeholder="Additional notes"
-              rows={4}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
-            >
-              {loading ? 'Creating...' : 'Create Clinical Record'}
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/clinical-records')}
-              className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-            >
-              Cancel
-            </button>
+          {/* Submit Card */}
+          <div className="card">
+            <div className="card-body">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-primary flex-1 flex items-center justify-center gap-2 py-3"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Creating Record...
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="w-5 h-5" />
+                      Create Clinical Record
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/clinical-records')}
+                  className="btn-outline flex-1 flex items-center justify-center gap-2 py-3"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Cancel
+                </button>
+              </div>
+              
+              <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-yellow-800">Important Notice</p>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      This clinical record will be permanently added to the system. 
+                      Please ensure all information is accurate before submission.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </form>
       </div>

@@ -12,6 +12,7 @@ export const createAnimal = async (payload: {
     age?: number;
     weight?: number;
     tag_id?: string;
+    description?: string;
 }) => {
     const res = await api.post('/animal', payload);
     return res.data;
