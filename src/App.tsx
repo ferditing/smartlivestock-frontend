@@ -151,7 +151,7 @@ export default function App() {
       <Route 
         path="/clinical-records" 
         element={
-          <RequireRole role="any">
+          <RequireRole role={["farmer", "vet"]}>
             <ClinicalRecordsList />
           </RequireRole>
         } 
@@ -159,7 +159,7 @@ export default function App() {
       <Route 
         path="/clinical-records/:recordId" 
         element={
-          <RequireRole role="any">
+          <RequireRole role={["farmer", "vet"]}>
             <ClinicalRecordDetail />
           </RequireRole>
         } 
@@ -167,7 +167,7 @@ export default function App() {
       <Route 
         path="/clinical-records/new" 
         element={
-          <RequireRole role="any">
+          <RequireRole role={["farmer", "vet"]}>
             <CreateClinicalRecord />
           </RequireRole>
         } 
@@ -175,7 +175,7 @@ export default function App() {
       <Route 
         path="/animals/:animalId/clinical-records/new" 
         element={
-          <RequireRole role="any">
+          <RequireRole role={["farmer", "vet"]}>
             <CreateClinicalRecord />
           </RequireRole>
         } 

@@ -5,7 +5,7 @@ export default function RequireRole({
   role,
   children,
 }: {
-  role: string | null;
+  role: string | string[] | null;
   children: ReactNode;
 }) {
   const userRole = localStorage.getItem("role");
