@@ -103,7 +103,7 @@ export default function Sidebar({ role, onNavClick }: { role: string; onNavClick
       to: "/clinical-records",
       label: "Clinical Records",
       icon: <FileText className="w-5 h-5" />,
-      show: true
+      show: role === "farmer" || role === "vet"
     }
   ];
 
