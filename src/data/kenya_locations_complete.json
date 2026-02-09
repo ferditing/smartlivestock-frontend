@@ -1,0 +1,166 @@
+{
+  "MOMBASA": {
+    "changamwe": ["port reitz", "kipevu", "airport", "changamwe", "chaani"],
+    "jomvu": ["jomvu kuu", "miritini", "mikindani"],
+    "kisauni": ["mjambere", "junda", "bamburi", "mwakirunge", "mtopanga", "magogoni", "shanzu"],
+    "nyali": ["frere town", "ziwa la ng'ombe", "mkomani", "kongowea", "kadzandani"],
+    "likoni": ["mtongwe", "shika adabu", "bofu", "likoni", "timbwani"],
+    "mvita": ["mji wa kale/makadara", "tudor", "tononoka", "shimanzi/ganjoni", "majengo"]
+  },
+  "KWALE": {
+    "msambweni": ["gombatobongwe", "ukunda", "kinondo", "ramisi"],
+    "lungalunga": ["pongwekikoneni", "dzombo", "mwereni", "vanga"],
+    "matuga": ["tsimba golini", "waa", "tiwi", "kubo south", "mkongani"],
+    "kinango": ["nadavaya", "puma", "kinango", "mackinnon-road", "chengoni/samburu", "mwavumbo", "kasemeni"]
+  },
+  "KILIFI": {
+    "kilifi north": ["tezo", "sokoni", "kibarani", "dabaso", "matsangoni", "watamu", "mnarani"],
+    "kilifi south": ["junju", "mwarakaya", "shimo la tewa", "chasimba", "mtepeni"],
+    "kaloleni": ["mariakani", "kayafungo", "kaloleni", "mwanamwinga"],
+    "rabai": ["mwawesa", "ruruma", "kambe/ribe", "rabai/kisurutini"],
+    "ganze": ["ganze", "bamba", "jaribuni", "sokoke"],
+    "malindi": ["jilore", "kakuyuni", "ganda", "malindi town", "shella"],
+    "magarini": ["marafa", "magarini", "gongoni", "adu", "garashi", "sabaki"]
+  },
+  "TANA RIVER": {
+    "garsen": ["kipini east", "garsen south", "kipini west", "garsen central", "garsen west", "garsen north"],
+    "galole": ["kinakomba", "mikinduni", "chewani", "wayu"],
+    "bura": ["chewele", "bura", "bangale", "sala", "madogo"]
+  },
+  "LAMU": {
+    "lamu east": ["faza", "kiunga", "basuba"],
+    "lamu west": ["shella", "mkomani", "hindi", "mkunumbi", "hongwe", "witu", "bahari"]
+  },
+  "TAITA TAVETA": {
+    "taveta": ["chala", "mahoo", "bomeni", "mboghoni", "mata"],
+    "wundanyi": ["wundanyi/mbale", "werugha", "wumingu/kishushe", "mwanda/mgange"],
+    "mwatate": ["rong'e", "mwatate", "bura", "chawia", "wusi/kishamba"],
+    "voi": ["mbololo", "sagalla", "kaloleni", "marungu", "kasigau", "ngolia"]
+  },
+  "GARISSA": {
+    "garissa township": ["waberi", "galbet", "township", "iftin"],
+    "balambala": ["balambala", "danyere", "jara jara", "saka", "sankuri"],
+    "lagdera": ["modogashe", "benane", "goreale", "maalimin", "sabena", "baraki"],
+    "dadaab": ["dertu", "dadaab", "labasigale", "damajale", "liboi", "abakaile"],
+    "fafi": ["bura", "dekaharia", "jarajila", "fafi", "nanighi"],
+    "ijara": ["hulugho", "sangailu", "ijara", "masalani"]
+  },
+  "WAJIR": {
+    "wajir north": ["gurar", "bute", "korondile", "malkagufu", "batalu", "danaba", "godoma"],
+    "wajir east": ["wagberi", "township", "barwago", "khorof/harar"],
+    "tarbaj": ["elben", "sarman", "tarbaj", "wargadud"],
+    "wajir west": ["arbajahan", "hadado/athibohol", "ademasajide", "wagalla/ganyure"],
+    "eldas": ["eldas", "della", "lakoley south/basir", "elnur/tula tula"],
+    "wajir south": ["benane", "burder", "dadaja bulla", "habasswein", "lagboghol south", "ibrahim ure", "diif"]
+  },
+  "MANDERA": {
+    "mandera west": ["takaba south", "takaba", "lag sure", "dandu", "gither"],
+    "banissa": ["banissa", "derkhale", "guba", "malkamari", "kiliwehiri"],
+    "mandera north": ["ashabito", "guticha", "morothile", "rhamu", "rhamu-dimtu"],
+    "mandera south": ["wargudud", "kutulo", "elwak south", "elwak north", "shimbir fatuma"],
+    "mandera east": ["arabia", "bulla mpya", "khalalio", "neboi", "township"],
+    "lafey": ["libehia", "fino", "lafey", "warankara", "alungo gof"]
+  },
+  "MARSABIT": {
+    "moyale": ["butiye", "sololo", "heilu-manyatta", "golbo", "moyale township", "uran", "obbu"],
+    "north horr": ["illeret", "north horr", "dukana", "maikona", "turbi"],
+    "saku": ["sagante/jaldesa", "karare", "marsabit central"],
+    "laisamis": ["loiyangalani", "kargi/south horr", "korr/ngurunit", "log logo", "laisamis"]
+  },
+  "ISIOLO": {
+    "isiolo north": ["wabera", "bulla pesa", "chari", "cherab", "ngare mara", "burat", "oldonyiro"],
+    "isiolo south": ["garbatulla", "kinna", "sericho"]
+  },
+  "MERU": {
+    "igembe south": ["maua", "kiegoi/antubochiu", "athiru gaiti", "akachiu", "kanuni"],
+    "igembe central": ["akirang'ondu", "athiru ruujine", "igembe east", "njia", "kangeta"],
+    "igembe north": ["antuambui", "ntunene", "antubetwe kiongo", "naathu", "amwathi"],
+    "tigania west": ["athwana", "akithii", "kianjai", "nkomo", "mbeu"],
+    "tigania east": ["thangatha", "mikinduri", "kiguchwa", "muthara", "karama"],
+    "north imenti": ["municipality", "ntima east", "ntima west", "nyaki west", "nyaki east"],
+    "buuri": ["timau", "kisima", "kiirua/naari", "ruiri/rwarera", "kibirichia"],
+    "central imenti": ["mwanganthia", "abothuguchi central", "abothuguchi west", "kiagu"],
+    "south imenti": ["mitunguu", "igoji east", "igoji west", "abogeta east", "abogeta west", "nkuene"]
+  },
+  "THARAKA-NITHI": {
+    "maara": ["mitheru", "muthambi", "mwimbi", "ganga", "chogoria"],
+    "chuka/igambang'om": ["mariani", "karingani", "magumoni", "mugwe", "igambang'ombe"],
+    "tharaka": ["gatunga", "mukothima", "nkondi", "chiakariga", "marimanti"]
+  },
+  "EMBU": {
+    "manyatta": ["ruguru/ngandori", "kithimu", "nginda", "mbeti north", "kirimari", "gaturi south"],
+    "runyenjes": ["gaturi north", "kagaari south", "central ward", "kagaari north", "kyeni north", "kyeni south"],
+    "mbeere south": ["mwea", "makima", "mbeti south", "mavuria", "kiambere"],
+    "mbeere north": ["nthawa", "muminji", "evurore"]
+  },
+  "KITUI": {
+    "mwingi north": ["ngomeni", "kyuso", "mumoni", "tseikuru", "tharaka"],
+    "mwingi west": ["kyome/thaana", "nguutani", "migwani", "kiomo/kyethani"],
+    "mwingi central": ["central", "kivou", "nguni", "nuu", "mui", "waita"],
+    "kitui west": ["mutonguni", "kauwi", "matinyani", "kwa mutonga/kithumula"],
+    "kitui rural": ["kisasi", "mbitini", "kwavonza/yatta", "kanyangi"],
+    "kitui central": ["miambani", "township", "kyangwithya west", "mulango", "kyangwithya east"],
+    "kitui east": ["zombe/mwitika", "chuluni", "nzambani", "voo/kyamatu", "endau/malalani", "mutito/kaliku"],
+    "kitui south": ["ikanga/kyatune", "mutomo", "mutha", "ikutha", "kanziko", "athi"]
+  },
+  "MACHAKOS": {
+    "masinga": ["kivaa", "masinga central", "ekalakala", "muthesya", "ndithini"],
+    "yatta": ["ndalani", "matuu", "kithimani", "ikombe", "katangi"],
+    "kangundo": ["kangundo north", "kangundo central", "kangundo east", "kangundo west"],
+    "matungulu": ["tala", "matungulu north", "matungulu east", "matungulu west", "kyeleni"],
+    "kathiani": ["mitaboni", "kathiani central", "upper kaewa/iveti", "lower kaewa/kaani"],
+    "mavoko": ["athi river", "kinanie", "muthwani", "syokimau/mulolongo"],
+    "machakos town": ["kalama", "mua", "mutituni", "machakos central", "mumbuni north", "muvuti/kiima-kimwe", "kola"],
+    "mwala": ["mbiuni", "makutano/mwala", "masii", "muthetheni", "wamunyu", "kibauni"]
+  },
+  "MAKUENI": {
+    "mbooni": ["tulimani", "mbooni", "kithungo/kitundu", "kisau/kiteta", "waia/kako", "kalawa"],
+    "kilome": ["kasikeu", "mukaa", "kiima kiu/kalanzoni"],
+    "kaiti": ["ukia", "kee", "kilungu", "ilima"],
+    "makueni": ["wote", "muvau/kikuumini", "mavindini", "kitise/kithuki", "kathonzweni", "nzaui/kilili/kalamba", "mbitini"],
+    "kibwezi west": ["makindu", "nguumo", "kikumbulyu north", "kikumbulyu south", "nguu/masumba", "emali/mulala"],
+    "kibwezi east": ["masongaleni", "mtito andei", "thange", "ivingoni/nzambani"]
+  },
+  "NYANDARUA": {
+    "kinangop": ["engineer", "gathara", "north kinangop", "murungaru", "njabini/kiburu", "nyakio", "githabai", "magumu"],
+    "kipipiri": ["wanjohi", "kipipiri", "geta", "githioro"],
+    "ol kalou": ["karau", "kanjuiri ridge", "mirangine", "kaimbaga", "rurii"],
+    "ol jorok": ["gathanji", "gatimu", "weru", "charagita"],
+    "ndaragwa": ["leshau pondo", "kiriita", "central", "shamata"]
+  },
+  "NYERI": {
+    "tetu": ["dedan kimanthi", "wamagana", "aguthi/gaaki"],
+    "kieni": ["mweiga", "naromoru kiamathaga", "mwiyogo/endarasha", "mugunda", "gatarakwa", "thegu river", "kabaru", "gakawa"],
+    "mathira": ["ruguru", "magutu", "iriaini", "konyu", "kirimukuyu", "karatina town"],
+    "othaya": ["mahiga", "iria-ini", "chinga", "karima"],
+    "mukurweini": ["gikondi", "rugi", "mukurwe-ini west", "mukurwe-ini central"],
+    "nyeri town": ["kiganjo/mathari", "rware", "gatitu/muruguru", "ruring'u", "kamakwa/mukaro"]
+  },
+  "KIRINYAGA": {
+    "mwea": ["mutithi", "kangai", "thiba", "wamumu", "nyangati", "murinduko", "gathigiriri", "tebere"],
+    "gichugu": ["kabare", "baragwi", "njukiini", "ngariama", "karumandi"],
+    "ndia": ["mukure", "kiine", "kariti"],
+    "kirinyaga central": ["mutira", "kanyeki-ini", "kerugoya", "inoi"]
+  },
+  "MURANG'A": {
+    "kangema": ["kanyenyaini", "muguru", "rwathia"],
+    "mathioya": ["gitugi", "kiru", "kamacharia"],
+    "kiharu": ["wangu", "mugoiri", "mbiri", "township", "murarandia", "gaturi"],
+    "kigumo": ["kahumbu", "muthithi", "kigumo", "kangari", "kinyona"],
+    "maragwa": ["kimorori/wempa", "makuyu", "kambiti", "kamahuha", "ichagaki", "nginda"],
+    "kandara": ["ng'araria", "muruka", "kagundu-ini", "gaichanjiru", "ithiru", "ruchu"],
+    "gatanga": ["ithanga", "kakuzi/mitubiri", "mugumo-ini", "kihumbu-ini", "gatanga", "kariara"]
+  },
+  "KIAMBU": {
+    "gatundu south": ["kiamwangi", "kiganjo", "ndarugu", "ngenda"],
+    "gatundu north": ["gituamba", "githobokoni", "chania", "mang'u"],
+    "juja": ["murera", "theta", "juja", "witeithie", "kalimoni"],
+    "thika town": ["township", "kamenu", "hospital", "gatuanyaga", "ngoliba"],
+    "ruiru": ["gitothua", "biashara", "gatongora", "kahawa sukari", "kahawa wendani", "kiuu", "mwiki", "mwihoko"],
+    "githunguri": ["githunguri", "githiga", "ikinu", "ngewa", "komothai"],
+    "kiambu": ["ting'ang'a", "ndumberi", "riabai", "township"],
+    "kiambaa": ["cianda", "karuri", "ndenderu", "muchatha", "kihara"],
+    "kabete": ["gitaru", "muguga", "nyadhuna", "kabete", "uthiru"],
+    "kikuyu": ["karai"]
+  }
+}

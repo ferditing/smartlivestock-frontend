@@ -1,0 +1,433 @@
+{
+  "MOMBASA": {},
+  "KWALE": {},
+  "KILIFI": {},
+  "TANA RIVER": {},
+  "LAMU": {},
+  "TAITA TAVETA": {},
+  "GARISSA": {},
+  "WAJIR": {},
+  "MANDERA": {},
+  "MARSABIT": {},
+  "ISIOLO": {},
+  "MERU": {},
+  "THARAKA-NITHI": {},
+  "EMBU": {},
+  "KITUI": {},
+  "MACHAKOS": {},
+  "MAKUENI": {},
+  "NYANDARUA": {},
+  "NYERI": {},
+  "KIRINYAGA": {},
+  "MURANG'A": {},
+  "KIAMBU": {},
+  "TURKANA": {},
+  "WEST POKOT": {},
+  "SAMBURU": {},
+  "TRANS NZOIA": {},
+  "UASIN GISHU": {},
+  "ELGEYO/MARAKWET": {},
+  "NANDI": {},
+  "BARINGO": {},
+  "LAIKIPIA": {},
+  "NAKURU": {},
+  "NAROK": {},
+  "KAJIADO": {},
+  "KERICHO": {},
+  "BOMET": {},
+  "KAKAMEGA": {},
+  "VIHIGA": {},
+  "BUNGOMA": {},
+  "BUSIA": {},
+  "SIAYA": {},
+  "KISUMU": {},
+  "HOMA BAY": {},
+  "MIGORI": {},
+  "KISII": {},
+  "NYAMIRA": {},
+  "NAIROBI": {},
+  "1": {
+    "changamwe": [],
+    "jomvu": [],
+    "kisauni": [],
+    "nyali": [],
+    "likoni": [],
+    "mvita": []
+  },
+  "2": {
+    "msambweni": [],
+    "lungalunga": [],
+    "matuga": [],
+    "kinango": []
+  },
+  "3": {
+    "kilifi north": [],
+    "kilifi south": [],
+    "kaloleni": [],
+    "rabai": [],
+    "ganze": [],
+    "malindi": [],
+    "magarini": []
+  },
+  "4": {
+    "garsen": [],
+    "galole": [],
+    "bura": []
+  },
+  "5": {
+    "lamu east": [],
+    "lamu west": []
+  },
+  "6": {
+    "taveta": [],
+    "wundanyi": [],
+    "mwatate": [],
+    "voi": []
+  },
+  "7": {
+    "garissa township": [],
+    "balambala": [],
+    "lagdera": [],
+    "dadaab": [],
+    "fafi": [],
+    "ijara": []
+  },
+  "8": {
+    "wajir north": [],
+    "wajir east": [],
+    "tarbaj": [],
+    "wajir west": [],
+    "eldas": [],
+    "wajir south": []
+  },
+  "9": {
+    "mandera west": [],
+    "banissa": [],
+    "mandera north": [],
+    "mandera south": [],
+    "mandera east": [],
+    "lafey": []
+  },
+  "10": {
+    "moyale": [],
+    "north horr": [],
+    "saku": [],
+    "laisamis": []
+  },
+  "11": {
+    "isiolo north": [],
+    "isiolo south": []
+  },
+  "12": {
+    "igembe south": [],
+    "igembe central": [],
+    "igembe north": [],
+    "tigania west": [],
+    "tigania east": [],
+    "north imenti": [],
+    "buuri": [],
+    "central imenti": [],
+    "south imenti": []
+  },
+  "13": {
+    "maara": [],
+    "chuka/igambang'om": [],
+    "tharaka": []
+  },
+  "14": {
+    "manyatta": [],
+    "runyenjes": [],
+    "mbeere south": [],
+    "mbeere north": []
+  },
+  "15": {
+    "mwingi north": [],
+    "mwingi west": [],
+    "mwingi central": [],
+    "kitui west": [],
+    "kitui rural": [],
+    "kitui central": [],
+    "kitui east": [],
+    "kitui south": []
+  },
+  "16": {
+    "masinga": [],
+    "yatta": [],
+    "kangundo": [],
+    "matungulu": [],
+    "kathiani": [],
+    "mavoko": [],
+    "machakos town": [],
+    "mwala": []
+  },
+  "17": {
+    "mbooni": [],
+    "kilome": [],
+    "kaiti": [],
+    "makueni": [],
+    "kibwezi west": [],
+    "kibwezi east": []
+  },
+  "18": {
+    "kinangop": [],
+    "kipipiri": [],
+    "ol kalou": [],
+    "ol jorok": [],
+    "ndaragwa": []
+  },
+  "19": {
+    "tetu": [],
+    "kieni": [],
+    "mathira": [],
+    "othaya": [],
+    "mukurweini": [],
+    "nyeri town": []
+  },
+  "20": {
+    "mwea": [],
+    "gichugu": [],
+    "ndia": [],
+    "kirinyaga central": []
+  },
+  "21": {
+    "kangema": [],
+    "mathioya": [],
+    "kiharu": [],
+    "kigumo": [],
+    "maragwa": [],
+    "kandara": [],
+    "gatanga": []
+  },
+  "22": {
+    "gatundu south": [],
+    "gatundu north": [],
+    "juja": [],
+    "thika town": [],
+    "ruiru": [],
+    "githunguri": [],
+    "kiambu": [],
+    "kiambaa": [],
+    "kabete": [],
+    "kikuyu": [],
+    "limuru": [],
+    "lari": []
+  },
+  "23": {
+    "turkana north": [],
+    "turkana west": [],
+    "turkana central": [],
+    "loima": [],
+    "turkana south": [],
+    "turkana east": []
+  },
+  "24": {
+    "kapenguria": [],
+    "sigor": [],
+    "kacheliba": [],
+    "pokot south": []
+  },
+  "25": {
+    "samburu west": [],
+    "samburu north": [],
+    "samburu east": []
+  },
+  "26": {
+    "kwanza": [],
+    "endebess": [],
+    "saboti": [],
+    "kiminini": [],
+    "cherangany": []
+  },
+  "27": {
+    "soy": [],
+    "turbo": [],
+    "moiben": [],
+    "ainabkoi": [],
+    "kapseret": [],
+    "kesses": []
+  },
+  "28": {
+    "marakwet east": [],
+    "marakwet west": [],
+    "keiyo north": [],
+    "keiyo south": []
+  },
+  "29": {
+    "tinderet": [],
+    "aldai": [],
+    "nandi hills": [],
+    "chesumei": [],
+    "emgwen": [],
+    "mosop": []
+  },
+  "30": {
+    "tiaty": [],
+    "baringo  north": [],
+    "baringo central": [],
+    "baringo south": [],
+    "mogotio": [],
+    "eldama ravine": []
+  },
+  "31": {
+    "laikipia west": [],
+    "laikipia east": [],
+    "laikipia north": []
+  },
+  "32": {
+    "molo": [],
+    "njoro": [],
+    "naivasha": [],
+    "gilgil": [],
+    "kuresoi south": [],
+    "kuresoi north": [],
+    "subukia": [],
+    "rongai": [],
+    "bahati": [],
+    "nakuru town west": [],
+    "nakuru town east": []
+  },
+  "33": {
+    "kilgoris": [],
+    "emurua dikirr": [],
+    "narok north": [],
+    "narok east": [],
+    "narok south": [],
+    "narok west": []
+  },
+  "34": {
+    "kajiado north": [],
+    "kajiado central": [],
+    "kajiado east": [],
+    "kajiado west": [],
+    "kajiado south": []
+  },
+  "35": {
+    "kipkelion east": [],
+    "kipkelion west": [],
+    "ainamoi": [],
+    "bureti": [],
+    "belgut": [],
+    "sigowet/soin": []
+  },
+  "36": {
+    "sotik": [],
+    "chepalungu": [],
+    "bomet east": [],
+    "bomet central": [],
+    "konoin": []
+  },
+  "37": {
+    "lugari": [],
+    "likuyani": [],
+    "malava": [],
+    "lurambi": [],
+    "navakholo": [],
+    "mumias west": [],
+    "mumias east": [],
+    "matungu": [],
+    "butere": [],
+    "khwisero": [],
+    "shinyalu": [],
+    "ikolomani": []
+  },
+  "38": {
+    "vihiga": [],
+    "sabatia": [],
+    "hamisi": [],
+    "luanda": [],
+    "emuhaya": []
+  },
+  "39": {
+    "mt.elgon": [],
+    "sirisia": [],
+    "kabuchai": [],
+    "bumula": [],
+    "kanduyi": [],
+    "webuye east": [],
+    "webuye west": [],
+    "kimilili": [],
+    "tongaren": []
+  },
+  "40": {
+    "teso north": [],
+    "teso south": [],
+    "nambale": [],
+    "matayos": [],
+    "butula": [],
+    "funyula": [],
+    "budalangi": []
+  },
+  "41": {
+    "ugenya": [],
+    "ugunja": [],
+    "alego usonga": [],
+    "gem": [],
+    "bondo": [],
+    "rarieda": []
+  },
+  "42": {
+    "kisumu east": [],
+    "kisumu west": [],
+    "kisumu central": [],
+    "seme": [],
+    "nyando": [],
+    "muhoroni": [],
+    "nyakach": []
+  },
+  "43": {
+    "kasipul": [],
+    "kabondo kasipul": [],
+    "karachuonyo": [],
+    "rangwe": [],
+    "homa bay town": [],
+    "ndhiwa": [],
+    "mbita": [],
+    "suba": []
+  },
+  "44": {
+    "rongo": [],
+    "awendo": [],
+    "suna east": [],
+    "suna west": [],
+    "uriri": [],
+    "nyatike": [],
+    "kuria west": [],
+    "kuria east": []
+  },
+  "45": {
+    "bonchari": [],
+    "south mugirango": [],
+    "bomachoge borabu": [],
+    "bobasi": [],
+    "bomachoge chache": [],
+    "nyaribari masaba": [],
+    "nyaribari chache": [],
+    "kitutu chache north": [],
+    "kitutu chache south": []
+  },
+  "46": {
+    "kitutu masaba": [],
+    "west mugirango": [],
+    "north mugirango": [],
+    "borabu": []
+  },
+  "47": {
+    "westlands": [],
+    "dagoretti north": [],
+    "dagoretti south": [],
+    "langata": [],
+    "kibra": [],
+    "roysambu": [],
+    "kasarani": [],
+    "ruaraka": [],
+    "embakasi south": [],
+    "embakasi north": [],
+    "embakasi central": [],
+    "embakasi east": [],
+    "embakasi west": [],
+    "makadara": [],
+    "kamukunji": [],
+    "starehe": [],
+    "mathare": []
+  }
+}
