@@ -109,30 +109,22 @@ export default function FarmerDashboard() {
                 <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
               </div>
               <div className="card-body">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <button className="p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors">
-                    <div className="text-center">
-                      <PawPrint className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                      <span className="text-sm font-medium text-gray-900">Add Animal</span>
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <button className="p-2 sm:p-3 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors flex flex-col items-center justify-center min-h-[90px] sm:min-h-[100px]">
+                    <PawPrint className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 mb-1 sm:mb-2 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm font-medium text-gray-900 text-center break-words leading-tight px-1">Add Animal</span>
                   </button>
-                  <button className="p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors">
-                    <div className="text-center">
-                      <Calendar className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                      <span className="text-sm font-medium text-gray-900">Book Appointment</span>
-                    </div>
+                  <button className="p-2 sm:p-3 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors flex flex-col items-center justify-center min-h-[90px] sm:min-h-[100px]">
+                    <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 mb-1 sm:mb-2 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm font-medium text-gray-900 text-center break-words leading-tight px-1">Book Appt</span>
                   </button>
-                  <button className="p-4 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors">
-                    <div className="text-center">
-                      <Activity className="w-6 h-6 text-purple-600 mx-auto mb-2" />
-                      <span className="text-sm font-medium text-gray-900">Health Report</span>
-                    </div>
+                  <button className="p-2 sm:p-3 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors flex flex-col items-center justify-center min-h-[90px] sm:min-h-[100px]">
+                    <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 mb-1 sm:mb-2 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm font-medium text-gray-900 text-center break-words leading-tight px-1">Health Report</span>
                   </button>
-                  <button className="p-4 bg-amber-50 hover:bg-amber-100 rounded-lg border border-amber-200 transition-colors">
-                    <div className="text-center">
-                      <AlertTriangle className="w-6 h-6 text-amber-600 mx-auto mb-2" />
-                      <span className="text-sm font-medium text-gray-900">Emergency</span>
-                    </div>
+                  <button className="p-2 sm:p-3 bg-amber-50 hover:bg-amber-100 rounded-lg border border-amber-200 transition-colors flex flex-col items-center justify-center min-h-[90px] sm:min-h-[100px]">
+                    <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600 mb-1 sm:mb-2 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm font-medium text-gray-900 text-center break-words leading-tight px-1">Emergency</span>
                   </button>
                 </div>
               </div>

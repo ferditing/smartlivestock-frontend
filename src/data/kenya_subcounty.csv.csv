@@ -1,0 +1,346 @@
+name,subCounty
+Mombasa,Changamwe
+Mombasa,Jomvu
+Mombasa,Kisauni
+Mombasa,Likoni
+Mombasa,Mvita
+Mombasa,Nyali
+Kwale,Kinango
+Kwale,Lungalunga
+Kwale,Matuga
+Kwale,Msambweni
+Kwale,Samburu Kwale
+Kilifi,Chonyi
+Kilifi,Ganze
+Kilifi,Kaloleni
+Kilifi,Kauma
+Kilifi,Kilifi North
+Kilifi,Kilifi South
+Kilifi,Magarini
+Kilifi,Malindi
+Kilifi,Rabai
+Tana River,Tana North
+Tana River,Tana Delta
+Tana River,Tana River
+Lamu,Lamu East
+Lamu,Lamu West
+Taita Taveta,Mwatate
+Taita Taveta,Taita
+Taita Taveta,Taveta
+Taita Taveta,Voi
+Garissa,Balambala
+Garissa,Dadaab
+Garissa,Fafi
+Garissa,Garissa
+Garissa,Hulugho
+Garissa,Ijara
+Garissa,Lagdera
+Wajir,Buna
+Wajir,Eldas
+Wajir,Habaswein.
+Wajir,Tarbaj
+Wajir,Wajir East.
+Wajir,Wajir North
+Wajir,Wajir South
+Wajir,Wajir West
+Mandera,Mandera West.
+Mandera,Banisa
+Mandera,Kutulo
+Mandera,Lafey
+Mandera,Mandera Central
+Mandera,Mandera East
+Mandera,Mandera North
+Marsabit,Loiyangalani
+Marsabit,Marsabit Central.
+Marsabit,Marsabit North.
+Marsabit,Marsabit South.
+Marsabit,Moyale
+Marsabit,North Horr
+Marsabit,Sololo
+Isiolo,Garbatulla.
+Isiolo,Isiolo
+Isiolo,Merti
+Meru,Buuri East
+Meru,Buuri West.
+Meru,Igembe Central
+Meru,Igembe North
+Meru,Igembe South
+Meru,Imenti North.
+Meru,Imenti South.
+Meru,Meru Central
+Meru,Tigania Central
+Meru,Tigania East.
+Meru,Tigania West
+Meru,Meru National Park.
+Meru,Mt Kenya Forest
+Tharaka Nithi,Igambang'ombe
+Tharaka Nithi,Maara
+Tharaka Nithi,Meru South
+Tharaka Nithi,Tharaka North
+Tharaka Nithi,Tharaka South
+Tharaka Nithi,Mt Kenya Forest
+Embu,Embu East
+Embu,Embu North
+Embu,Embu West
+Embu,Mbeere South
+Embu,Mbeere North
+Embu,Mt Kenya Forest
+Kitui,Ikutha
+Kitui,Katulani
+Kitui,Kisasi
+Kitui,Kitui Central
+Kitui,Kitui West
+Kitui,Kyuso
+Kitui,Lower Yatta
+Kitui,Matinyani
+Kitui,Migwani
+Kitui,Mumoni
+Kitui,Mutitu
+Kitui,Mutitu North
+Kitui,Mutomo
+Kitui,Mwingi Central
+Kitui,Mwingi East
+Kitui,Nzambani
+Kitui,Thagicu
+Kitui,Tseikuru
+Machakos,Athi River
+Machakos,Kalama
+Machakos,Kangundo
+Machakos,Kathiani
+Machakos,Machakos
+Machakos,Masinga
+Machakos,Matungulu
+Machakos,Mwala
+Machakos,Yatta
+Makueni,Kathonzweni
+Makueni,Kibwezi
+Makueni,Kilungu
+Makueni,Makindu
+Makueni,Makueni
+Makueni,Mbooni East
+Makueni,Mbooni West
+Makueni,Mukaa
+Makueni,Nzaui
+Nyandarua,Kinangop
+Nyandarua,Nyandarua South
+Nyandarua,Mirangine
+Nyandarua,Kipipiri
+Nyandarua,Nyandarua Central
+Nyandarua,Nyandarua West
+Nyandarua,Nyandarua North
+Nyandarua,Aberdare National Park
+Nyeri,Tetu
+Nyeri,Kieni East
+Nyeri,Kieni West
+Nyeri,Mathira East
+Nyeri,Mathira West
+Nyeri,Nyeri South
+Nyeri,Mukurwe ini
+Nyeri,Nyeri Central
+Nyeri,Mt Kenya Forest
+Nyeri,Aberdare Forest
+Kirinyaga,Kirinyaga Central
+Kirinyaga,Kirinyaga East
+Kirinyaga,Kirinyaga West
+Kirinyaga,Mwea East
+Kirinyaga,Mwea West
+Kirinyaga,Mt Kenya Forest
+Murang'a,Murang'a East
+Murang'a,Kangema
+Murang'a,Mathioya
+Murang'a,Kahuro
+Murang'a,Murang'a South
+Murang'a,Gatanga
+Murang'a,Kigumo
+Murang'a,Kandara
+Murang'a,Aberdare Forest
+Kiambu,Gatundu North
+Kiambu,Gatundu South
+Kiambu,Githunguri
+Kiambu,Juja
+Kiambu,Kabete
+Kiambu,Kiambaa
+Kiambu,Kiambu
+Kiambu,Kikuyu
+Kiambu,Lari
+Kiambu,Limuru
+Kiambu,Ruiru
+Kiambu,Thika East
+Kiambu,Thika West
+Turkana,Kibish
+Turkana,Loima
+Turkana,Turkana Central
+Turkana,Turkana East
+Turkana,Turkana North
+Turkana,Turkana South
+Turkana,Turkana West
+West Pokot,Kipkomo
+West Pokot,Pokot Central
+West Pokot,Pokot North
+West Pokot,Pokot South
+West Pokot,West Pokot
+Samburu,Samburu Central
+Samburu,Samburu East
+Samburu,Samburu North
+Trans Nzoia,Trans Nzoia West
+Trans Nzoia,Trans Nzoia East
+Trans Nzoia,Kwanza
+Trans Nzoia,Endebess
+Trans Nzoia,Kiminini
+Uasin Gishu,Ainabkoi
+Uasin Gishu,Kapseret
+Uasin Gishu,Kesses
+Uasin Gishu,Moiben
+Uasin Gishu,Soy
+Uasin Gishu,Turbo
+Elgeyo Marakwet,Keiyo North
+Elgeyo Marakwet,Keiyo South
+Elgeyo Marakwet,Marakwet East
+Elgeyo Marakwet,Marakwet West
+Nandi,Chesumei
+Nandi,Nandi Central
+Nandi,Nandi East
+Nandi,Nandi North
+Nandi,Nandi South
+Nandi,Tinderet
+Baringo,Baringo Central
+Baringo,Baringo North
+Baringo,East Pokot
+Baringo,Koibatek
+Baringo,Marigat
+Baringo,Mogotio
+Baringo,Tiaty East
+Laikipia,Laikipia Central
+Laikipia,Laikipia East
+Laikipia,Laikipia North
+Laikipia,Laikipia West
+Laikipia,Nyahururu
+Nakuru,Gilgil
+Nakuru,Kuresoi North
+Nakuru,Kuresoi South
+Nakuru,Molo
+Nakuru,Naivasha
+Nakuru,Nakuru East
+Nakuru,Nakuru North
+Nakuru,Nakuru West
+Nakuru,Njoro
+Nakuru,Rongai
+Nakuru,Subukia
+Narok,Narok East
+Narok,Narok North
+Narok,Narok South
+Narok,Narok West
+Narok,Trans Mara East
+Narok,Trans Mara West
+Narok,Mau Forest
+Kajiado,Isinya
+Kajiado,Kajiado Central
+Kajiado,Kajiado North
+Kajiado,Kajiado West
+Kajiado,Loitokitok
+Kajiado,Mashuuru
+Kericho,Belgut
+Kericho,Bureti
+Kericho,Kericho East
+Kericho,Kipkelion
+Kericho,Londiani
+Kericho,Soin Sigowet
+Bomet,Bomet East
+Bomet,Chepalungu
+Bomet,Konoin
+Bomet,Sotik
+Bomet,Bomet Central
+Kakamega,Butere
+Kakamega,Kakamega Central
+Kakamega,Kakamega East
+Kakamega,Kakamega North
+Kakamega,Kakamega South
+Kakamega,Khwisero
+Kakamega,Likuyani
+Kakamega,Lugari
+Kakamega,Matete
+Kakamega,Matungu
+Kakamega,Mumias East
+Kakamega,Mumias West
+Kakamega,Navakholo
+Vihiga,Emuhaya
+Vihiga,Vihiga
+Vihiga,Sabatia
+Vihiga,Luanda
+Vihiga,Hamisi
+Vihiga,Kakamega Forest
+Bungoma,Bumula
+Bungoma,Bungoma Central
+Bungoma,Bungoma East
+Bungoma,Bungoma North
+Bungoma,Bungoma South
+Bungoma,Cheptais
+Bungoma,Kimilili Bungoma
+Bungoma,Mt Elgon
+Bungoma,Bungoma West
+Bungoma,Tongaren
+Bungoma,Webuye West
+Bungoma,Mt Elgon Forest
+Busia,Bunyala
+Busia,Busia
+Busia,Butula
+Busia,Nambale
+Busia,Samia
+Busia,Teso North
+Busia,Teso South
+Siaya,Siaya
+Siaya,Gem
+Siaya,Ugenya
+Siaya,Ugunja
+Siaya,Bondo
+Siaya,Rarieda
+Kisumu,Kisumu East
+Kisumu,Kisumu Central
+Kisumu,Kisumu West
+Kisumu,Seme
+Kisumu,Muhoroni
+Kisumu,Nyando
+Kisumu,Nyakach
+Homa Bay,Homa Bay
+Homa Bay,Ndhiwa
+Homa Bay,Rachuonyo North
+Homa Bay,Rachuonyo East
+Homa Bay,Rachuonyo South
+Homa Bay,Rangwe
+Homa Bay,Suba North
+Homa Bay,Suba South
+Migori,Awendo
+Migori,Kuria East
+Migori,Kuria West
+Migori,Nyatike
+Migori,Rongo
+Migori,Suna East
+Migori,Suna West
+Migori,Uriri
+Kisii,Etago
+Kisii,Gucha
+Kisii,Gucha South
+Kisii,Kenyenya
+Kisii,Kisii Central
+Kisii,Kisii South
+Kisii,Kitutu Central
+Kisii,Marani
+Kisii,Masaba South
+Kisii,Nyamache
+Kisii,Sameta
+Nyamira,Borabu
+Nyamira,Manga
+Nyamira,Masaba North
+Nyamira,Nyamira North
+Nyamira,Nyamira South
+Nairobi,Dagoretti
+Nairobi,Embakasi
+Nairobi,Kamukunji
+Nairobi,Kasarani
+Nairobi,Kibra
+Nairobi,Lang'ata
+Nairobi,Makadara
+Nairobi,Mathare
+Nairobi,Njiru
+Nairobi,Starehe
+Nairobi,Westlands

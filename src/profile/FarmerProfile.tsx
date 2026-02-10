@@ -20,6 +20,7 @@ import {
 type FarmerProfileMeta = {
   county?: string;
   subcounty?: string;
+  ward?: string;
   locality?: string;
   farm_size?: string;
   livestock_count?: number;
@@ -310,7 +311,7 @@ export default function FarmerProfile() {
               
               <div className="card-body">
                 {editing ? (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         County
@@ -325,7 +326,7 @@ export default function FarmerProfile() {
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Sub-county
+                        Sub-county / Constituency
                       </label>
                       <input
                         className="input-field"
@@ -337,7 +338,19 @@ export default function FarmerProfile() {
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Locality
+                        Ward
+                      </label>
+                      <input
+                        className="input-field"
+                        placeholder="e.g., Central Ward"
+                        value={meta.ward || ""}
+                        onChange={(e) => setMeta({...meta, ward: e.target.value})}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Locality / Village
                       </label>
                       <input
                         className="input-field"
@@ -348,19 +361,24 @@ export default function FarmerProfile() {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <p className="text-sm text-gray-500">County</p>
                       <p className="font-medium text-gray-900">{meta.county || 'Not set'}</p>
                     </div>
                     
                     <div>
-                      <p className="text-sm text-gray-500">Sub-county</p>
+                      <p className="text-sm text-gray-500">Sub-county / Constituency</p>
                       <p className="font-medium text-gray-900">{meta.subcounty || 'Not set'}</p>
                     </div>
                     
                     <div>
-                      <p className="text-sm text-gray-500">Locality</p>
+                      <p className="text-sm text-gray-500">Ward</p>
+                      <p className="font-medium text-gray-900">{meta.ward || 'Not set'}</p>
+                    </div>
+                    
+                    <div>
+                      <p className="text-sm text-gray-500">Locality / Village</p>
                       <p className="font-medium text-gray-900">{meta.locality || 'Not set'}</p>
                     </div>
                   </div>

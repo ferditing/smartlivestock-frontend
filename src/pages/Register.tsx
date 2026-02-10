@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api/axios";
-import rawKenyaData from "../data/kenya_locations.json";
+//import rawKenyaData from "../data/kenya_locations.json";
+import rawKenyaData from "../data/kenya_locations_complete3.json";
 import { useToast } from "../context/ToastContext";
 import {
   User,
@@ -21,13 +22,15 @@ type LocationState = {
   lng?: number;
   county?: string;
   sub_county?: string;
+  ward?: string;
   locality?: string;
 };
 
 export default function Register() {
   const navigate = useNavigate();
-  const kenyaData: Record<string, string[]> = rawKenyaData;
+  const kenyaData: Record<string, Record<string, string[]>> = rawKenyaData;
   const { addToast } = useToast();
+  const countyList = Object.keys(kenyaData).sort();
 
   const [form, setForm] = useState({
     name: "",
@@ -38,6 +41,9 @@ export default function Register() {
     confirmPassword: ""
   });
   const [location, setLocation] = useState<LocationState>({});
+  const [countySearch, setCountySearch] = useState("");
+  const [filteredCounties, setFilteredCounties] = useState<string[]>(countyList);
+  const [showCountyDropdown, setShowCountyDropdown] = useState(false);
   const [gpsTried, setGpsTried] = useState(false);
   const [gpsStatus, setGpsStatus] = useState<"idle" | "requesting" | "granted" | "denied">("idle");
   const [loading, setLoading] = useState(false);
@@ -91,8 +97,8 @@ export default function Register() {
 
           let chosenSub: string | undefined = undefined;
           if (chosenCounty && kenyaData[chosenCounty]) {
-            const subs = kenyaData[chosenCounty];
-            const matchedSub = subs.find(s => {
+            const constituencies = Object.keys(kenyaData[chosenCounty]);
+            const matchedSub = constituencies.find((s) => {
               const ns = norm(s);
               const na = norm(addrSubRaw);
               return ns === na || ns.includes(na) || na.includes(ns);
@@ -106,12 +112,12 @@ export default function Register() {
             sub_county: chosenSub || prev.sub_county || (addrSubRaw || undefined),
             locality: addr.village || addr.town || addr.suburb || addr.hamlet || prev.locality,
           }));
-        } catch (err) {
-          console.warn('reverse geocode failed', err);
+        } catch {
+          console.warn('reverse geocode failed');
           addToast('warning', 'Location Details', 'Could not fetch detailed location info');
         }
       },
-      (err) => {
+      () => {
         setGpsStatus('denied');
         addToast('error', 'Location Access', 'Please enable location access or select manually');
       },
@@ -150,12 +156,38 @@ export default function Register() {
       return false;
     }
     
-    if ((form.role === "vet" || form.role === "agrovet") && !location.county) {
-      addToast('warning', 'Location Required', 'Please provide location details for this role');
+    // Location is required for all users
+    if (!location.county) {
+      addToast('warning', 'Location Required', 'Please select your county');
+      return false;
+    }
+    
+    if (!location.sub_county) {
+      addToast('warning', 'Location Required', 'Please select your constituency');
       return false;
     }
     
     return true;
+  };
+
+  const handleCountySearch = (value: string) => {
+    setCountySearch(value);
+    if (value.trim()) {
+      const filtered = countyList.filter(county =>
+        county.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilteredCounties(filtered);
+      setShowCountyDropdown(true);
+    } else {
+      setFilteredCounties(countyList);
+      setShowCountyDropdown(false);
+    }
+  };
+
+  const selectCounty = (county: string) => {
+    setLocation({ ...location, county, sub_county: undefined, ward: undefined });
+    setCountySearch(county);
+    setShowCountyDropdown(false);
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -167,7 +199,7 @@ export default function Register() {
     try {
       await api.post("/auth/register", {
         ...form,
-        location: (form.role === "vet" || form.role === "agrovet") ? location : undefined,
+        location: location,
       });
 
       addToast('success', 'Registration Successful', 'Account created successfully!');
@@ -183,7 +215,7 @@ export default function Register() {
     }
   };
 
-  const showLocationFallback = form.role === "vet" || form.role === "agrovet";
+  const showLocationFallback = form.role === "vet" || form.role === "agrovet" || form.role === "farmer";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-green-50 p-4">
@@ -338,19 +370,19 @@ export default function Register() {
             {/* Location Section (Conditional) */}
             {showLocationFallback && (
               <div className="border-t border-gray-200 pt-6">
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-3 mb-6">
                   <MapPin className="w-5 h-5 text-green-600" />
                   <div>
-                    <h3 className="font-semibold text-gray-900">Location Details</h3>
-                    <p className="text-sm text-gray-600">Required for service providers</p>
+                    <h3 className="font-semibold text-gray-900">Location Details *</h3>
+                    <p className="text-sm text-gray-600">Required - County and Constituency must be selected</p>
                   </div>
                 </div>
 
                 {/* GPS Button */}
-                <div className="mb-4">
+                <div className="mb-6">
                   <button
                     type="button"
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                    className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-colors font-medium ${
                       gpsStatus === 'granted'
                         ? 'bg-green-100 text-green-700 border border-green-300'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -370,66 +402,106 @@ export default function Register() {
                     ) : (
                       <MapPin className="w-4 h-4" />
                     )}
-                    {gpsStatus === 'requesting' && 'Detecting location...'}
-                    {gpsStatus === 'granted' && 'Location detected'}
-                    {gpsStatus === 'denied' && 'Location denied - select manually'}
-                    {gpsStatus === 'idle' && 'Use my current location'}
+                    <span>
+                      {gpsStatus === 'requesting' && 'Detecting location...'}
+                      {gpsStatus === 'granted' && 'Location detected'}
+                      {gpsStatus === 'denied' && 'Location denied - select manually'}
+                      {gpsStatus === 'idle' && 'Use my current location'}
+                    </span>
                   </button>
                 </div>
 
-                {/* Location Dropdowns */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
+                {/* Location Fields Grid - Mobile First */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* County Search */}
+                  <div className="relative md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       County *
                     </label>
-                    <select
-                      className="select-field"
-                      value={location.county || ""}
-                      onChange={(e) =>
-                        setLocation({ ...location, county: e.target.value })
-                      }
+                    <input
+                      type="text"
+                      className="input-field w-full"
+                      placeholder="Type to search county..."
+                      value={countySearch}
+                      onChange={(e) => handleCountySearch(e.target.value)}
+                      onFocus={() => setShowCountyDropdown(true)}
                       disabled={loading}
-                      required={showLocationFallback}
-                    >
-                      <option value="">Select County</option>
-                      {Object.keys(kenyaData).map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
+                      autoComplete="off"
+                    />
+                    {showCountyDropdown && countySearch && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                        {filteredCounties.length > 0 ? (
+                          filteredCounties.map((county) => (
+                            <button
+                              key={county}
+                              type="button"
+                              onClick={() => selectCounty(county)}
+                              className="w-full text-left px-4 py-2 hover:bg-green-100 transition-colors text-sm"
+                            >
+                              {county}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-2 text-gray-500 text-sm">No counties found</div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
+                  {/* Constituency (Sub-county) */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Sub-county
+                      Constituency
                     </label>
                     <select
-                      className="select-field"
+                      className="select-field w-full"
                       disabled={!location.county || loading}
                       value={location.sub_county || ""}
                       onChange={(e) =>
-                        setLocation({ ...location, sub_county: e.target.value })
+                        setLocation({ ...location, sub_county: e.target.value, ward: undefined })
                       }
                     >
-                      <option value="">Select Sub-county</option>
+                      <option value="">Select Constituency</option>
                       {location.county && kenyaData[location.county] &&
-                        kenyaData[location.county].map((sc: string) => (
-                          <option key={sc} value={sc}>
-                            {sc}
+                        Object.keys(kenyaData[location.county]).map((constituency) => (
+                          <option key={constituency} value={constituency}>
+                            {constituency}
                           </option>
                         ))}
                     </select>
                   </div>
 
+                  {/* Ward */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Locality
+                      Ward
+                    </label>
+                    <select
+                      className="select-field w-full"
+                      disabled={!location.county || !location.sub_county || loading}
+                      value={location.ward || ""}
+                      onChange={(e) =>
+                        setLocation({ ...location, ward: e.target.value })
+                      }
+                    >
+                      <option value="">Select Ward</option>
+                      {location.county && location.sub_county && kenyaData[location.county] && kenyaData[location.county][location.sub_county] &&
+                        kenyaData[location.county][location.sub_county].map((ward) => (
+                          <option key={ward} value={ward}>
+                            {ward}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  {/* Locality/Village */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Locality / Village
                     </label>
                     <input
-                      className="input-field"
-                      placeholder="Village / Estate"
+                      className="input-field w-full"
+                      placeholder="Village / Estate (Optional)"
                       value={location.locality || ""}
                       onChange={(e) =>
                         setLocation({ ...location, locality: e.target.value })
