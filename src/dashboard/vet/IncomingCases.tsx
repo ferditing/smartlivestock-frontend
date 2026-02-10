@@ -32,7 +32,13 @@ export default function IncomingCases() {
     setLoading(true);
     try {
       const data = await fetchPendingReports();
-      setCases(data);
+      // Sort cases by created_at in descending order (latest first)
+      const sortedData = data.sort((a: any, b: any) => {
+        const dateA = new Date(a.created_at).getTime();
+        const dateB = new Date(b.created_at).getTime();
+        return dateB - dateA; // Latest first
+      });
+      setCases(sortedData);
     } catch (error) {
       addToast('error', 'Error', 'Failed to load incoming cases');
       setCases([]);
@@ -42,8 +48,10 @@ export default function IncomingCases() {
   };
 
   const filteredCases = cases.filter(c => {
+    const canonicalSymptomText = c.canonical_symptoms?.join(' ') || '';
     const matchesSearch = 
       c.animal_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      canonicalSymptomText.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.symptom_text?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.farmer_name?.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -183,8 +191,23 @@ export default function IncomingCases() {
                         }`} />
                       </div>
                       <div>
-                        <h3 className="font-bold text-gray-900">{c.animal_type || 'Unknown Animal'}</h3>
-                        <p className="text-gray-600 text-sm mt-1">{c.symptom_text}</p>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-bold text-gray-900">
+                            {c.animal_type 
+                              ? c.animal_type.charAt(0).toUpperCase() + c.animal_type.slice(1)
+                              : 'Unknown Animal'
+                            }
+                          </h3>
+                          {c.animal_type && (
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Species</span>
+                          )}
+                        </div>
+                        <p className="text-gray-600 text-sm mt-1">
+                          {c.canonical_symptoms && c.canonical_symptoms.length > 0
+                            ? c.canonical_symptoms.map((s: string) => s.replace(/_/g, ' ')).join(', ')
+                            : c.symptom_text
+                          }
+                        </p>
                       </div>
                     </div>
 
@@ -197,11 +220,18 @@ export default function IncomingCases() {
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-gray-400" />
-                        <div>
-                          <p className="text-xs text-gray-500">Location</p>
-                          <p className="font-medium text-gray-900">{c.location || 'Not specified'}</p>
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Detected Symptoms</p>
+                        <div className="flex flex-wrap gap-1">
+                          {c.canonical_symptoms && c.canonical_symptoms.length > 0 ? (
+                            c.canonical_symptoms.map((symptom: string) => (
+                              <span key={symptom} className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                                {symptom.replace(/_/g, ' ')}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-xs text-gray-500">No mapped symptoms</span>
+                          )}
                         </div>
                       </div>
                     </div>

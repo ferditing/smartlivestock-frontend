@@ -33,6 +33,8 @@ type VetMeta = {
 };
 
 type User = {
+  county: string;
+  phone: string;
   id: number;
   name: string;
   email: string;
@@ -56,7 +58,9 @@ export default function VetProfile() {
     try {
       const res = await api.get("/profile/me");
       setUser(res.data);
-      setMeta(res.data.profile_meta || {});
+      // Ensure phone is available in meta (fall back to top-level user.phone)
+      const profileMeta = res.data.profile_meta || {};
+      setMeta({ ...profileMeta, phone: profileMeta.phone || res.data.phone || "" });
     } catch (error) {
       addToast('error', 'Error', 'Failed to load profile');
     } finally {
@@ -168,7 +172,7 @@ export default function VetProfile() {
                 <button
                   onClick={() => {
                     setEditing(false);
-                    setMeta(user.profile_meta || {});
+                    setMeta(user?.profile_meta || { phone: user?.phone || "", county: user?.county || "" });
                   }}
                   className="btn-outline flex items-center gap-2"
                 >
