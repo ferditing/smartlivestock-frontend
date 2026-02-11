@@ -6,11 +6,16 @@ export const fetchNearbyServices = async (lat: number, lng: number, radius = 100
   return res.data;
 };
 
-export const reportSymptom = async (symptom: string, opts?: { lat?: number; lng?: number; animal_id?: number }) => {
+export const reportSymptom = async (
+  symptom: string,
+  opts?: { lat?: number; lng?: number; animal_id?: number; animal_type?: string; canonical_symptoms?: string[] }
+) => {
   return api.post("/reports", {
     symptom_text: symptom,
     lat: opts?.lat,
     lng: opts?.lng,
     animal_id: opts?.animal_id,
+    animal_type: opts?.animal_type,
+    canonical_symptoms: opts?.canonical_symptoms,
   });
 };

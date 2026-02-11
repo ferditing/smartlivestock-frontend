@@ -77,7 +77,7 @@ export default function FarmerDashboard() {
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Map */}
+          {/* Left Column - Map & Report */}
           <div className="lg:col-span-2 space-y-6">
             {/* Map Section */}
             <div className="card">
@@ -93,17 +93,16 @@ export default function FarmerDashboard() {
                 </div>
               </div>
               <div className="card-body p-0">
-                <div className="h-[400px]">
-                  <NearbyServicesMap />
-                </div>
+                <NearbyServicesMap />
               </div>
             </div>
-            {/* Quick Actions moved to right column to avoid overlapping provider list */}
+            {/* Symptom Report Modal */}
+            <ReportSymptom />
           </div>
 
-          {/* Right Column - Report & Activities */}
+          {/* Right Column - Activities & Alerts */}
           <div className="space-y-6">
-            {/* Quick Actions - moved here so it won't overlap the provider list */}
+            {/* Quick Actions */}
             <div className="card">
               <div className="card-header">
                 <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
@@ -129,9 +128,6 @@ export default function FarmerDashboard() {
                 </div>
               </div>
             </div>
-            {/* Symptom Report */}
-            <ReportSymptom />
-
             {/* Recent Activities */}
             <div className="card">
               <div className="card-header">
