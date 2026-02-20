@@ -174,7 +174,7 @@ export default function NearbyServicesMap() {
   return (
     <>
      {/* Filter controls */}
-     <div className="flex gap-2 mb-4">
+     <div className="flex flex-wrap gap-2 mb-4 px-4 sm:px-0">
       {
         (["all", "vet", "agrovet"] as ProviderType[]).map((type) => (
           <button
@@ -186,12 +186,12 @@ export default function NearbyServicesMap() {
               : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
            }`}
           >
-            {type === "all" ? "Show All Providers" : `${type}s`}
+            {type === "all" ? "All" : type === "vet" ? "Vets" : "Agrovets"}
           </button>
         ))
       }
      </div>
-      <MapContainer center={pos} zoom={13} className="h-[400px] rounded">
+      <MapContainer center={pos} zoom={13} className="h-[300px] sm:h-[400px] rounded-b overflow-hidden" style={{ minHeight: 280 }}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
         {/* Farmer location marker */}
@@ -225,9 +225,9 @@ export default function NearbyServicesMap() {
       </MapContainer>
 
       {/* Provider list beneath the map */}
-      <div className="mt-4">
+      <div className="mt-4 px-4 sm:px-0 pb-2">
         <h3 className="text-lg font-semibold mb-2">Nearby Providers ({filteredProviders.length})</h3>
-        <ul className="space-y-2 max-h-48 overflow-auto">
+        <ul className="space-y-2 max-h-40 sm:max-h-48 overflow-auto">
           {filteredProviders.map((p) => (
             <li key={p.id} className="p-2 border rounded flex justify-between items-center">
               <div>
@@ -236,7 +236,7 @@ export default function NearbyServicesMap() {
               </div>
               <div>
                 {p.provider_type === 'vet' && (
-                  <button className="text-blue-600 underline" onClick={() => navigate(`/farmer/appointments/new?provider=${p.id}`)}>Book Apointment</button>
+                  <button className="text-blue-600 underline" onClick={() => navigate(`/farmer/appointments/new?provider=${p.id}`)}>Book Appointment</button>
                 )}
                 {p.provider_type === 'agrovet' && (
                   <button className="text-blue-600 underline" onClick={() => navigate(`/providers/${p.id}`)}>View</button>

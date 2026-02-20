@@ -7,12 +7,16 @@ import Login from "../pages/Login";
 import { ClinicalRecordDetail } from '../dashboard/ClinicalRecords/ClinicalRecordDetail';
 import { CreateClinicalRecord } from '../dashboard/ClinicalRecords/CreateClinicalRecord';
 import ClinicalRecordsList from '../dashboard/ClinicalRecords/ClinicalRecordsList';
+import Marketplace from "../dashboard/farmer/Marketplace";
+import Orders from "../dashboard/farmer/Orders";
 
 export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/farmer" element={<RequireRole role="farmer"><FarmerDashboard /></RequireRole>} />
+      <Route path="/farmer/marketplace" element={<RequireRole role="farmer"><Marketplace /></RequireRole>} />
+      <Route path="/farmer/orders" element={<RequireRole role="farmer"><Orders /></RequireRole>} />
       <Route path="/vet" element={<RequireRole role="vet"><VetDashboard /></RequireRole>} />
       <Route path="/agrovet" element={<RequireRole role="agrovet"><AgroDashboard /></RequireRole>} />
       

@@ -14,7 +14,9 @@ import {
   EyeOff,
   Loader2,
   CheckCircle,
-  XCircle
+  XCircle,
+  ArrowLeft,
+  PawPrint,
 } from "lucide-react";
 
 type LocationState = {
@@ -42,7 +44,7 @@ export default function Register() {
   });
   const [location, setLocation] = useState<LocationState>({});
   const [countySearch, setCountySearch] = useState("");
-  const [filteredCounties, setFilteredCounties] = useState<string[]>(countyList);
+  const [filteredCounties, setFilteredCounties] = useState<string[]>(() => Object.keys(kenyaData).sort());
   const [showCountyDropdown, setShowCountyDropdown] = useState(false);
   const [gpsTried, setGpsTried] = useState(false);
   const [gpsStatus, setGpsStatus] = useState<"idle" | "requesting" | "granted" | "denied">("idle");
@@ -172,16 +174,11 @@ export default function Register() {
 
   const handleCountySearch = (value: string) => {
     setCountySearch(value);
-    if (value.trim()) {
-      const filtered = countyList.filter(county =>
-        county.toLowerCase().includes(value.toLowerCase())
-      );
-      setFilteredCounties(filtered);
-      setShowCountyDropdown(true);
-    } else {
-      setFilteredCounties(countyList);
-      setShowCountyDropdown(false);
-    }
+    const filtered = value.trim()
+      ? countyList.filter((c) => c.toLowerCase().includes(value.toLowerCase()))
+      : countyList;
+    setFilteredCounties(filtered);
+    setShowCountyDropdown(true);
   };
 
   const selectCounty = (county: string) => {
@@ -208,7 +205,14 @@ export default function Register() {
         navigate("/login");
       }, 1500);
     } catch (err: any) {
-      const errorMessage = err?.response?.data?.error || "Registration failed";
+      let errorMessage = err?.response?.data?.error;
+      if (!errorMessage) {
+        if (err?.code === "ERR_NETWORK" || err?.message?.includes("Network")) {
+          errorMessage = "Cannot reach server. Is the backend running on port 3000?";
+        } else {
+          errorMessage = err?.message || "Registration failed";
+        }
+      }
       addToast('error', 'Registration Failed', errorMessage);
     } finally {
       setLoading(false);
@@ -218,22 +222,39 @@ export default function Register() {
   const showLocationFallback = form.role === "vet" || form.role === "agrovet" || form.role === "farmer";
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-green-50 p-4">
-      <div className="w-full max-w-2xl">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-green-600 to-green-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <User className="w-10 h-10 text-white" />
+    <div className="min-h-screen flex flex-col sm:flex-row bg-gray-50">
+      <div className="hidden sm:flex sm:w-2/5 bg-gradient-to-br from-green-600 via-emerald-700 to-teal-800 p-8 flex-col justify-center text-white animate-fadeInUp">
+        <Link to="/" className="inline-flex items-center gap-2 text-white/90 hover:text-white mb-8 transition">
+          <ArrowLeft className="w-4 h-4" />
+          Back to home
+        </Link>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur">
+            <PawPrint className="w-8 h-8" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Join SmartLivestock</h1>
-          <p className="text-gray-600 mt-2">Create your account to get started</p>
+          <span className="text-2xl font-bold">SmartLivestock</span>
         </div>
+        <p className="text-white/90 max-w-sm">
+          Create your account as a farmer, vet, or agrovet and start managing livestock and orders in one place.
+        </p>
+      </div>
+      <div className="flex-1 overflow-y-auto flex items-start justify-center p-4 sm:p-8">
+        <div className="w-full max-w-2xl animate-fadeInUp">
+          <Link to="/" className="sm:hidden inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6">
+            <ArrowLeft className="w-4 h-4" />
+            Back to home
+          </Link>
+          {/* Header */}
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">Create account</h1>
+            <p className="text-gray-600 mt-1">Join as farmer, vet, or agrovet</p>
+          </div>
 
-        {/* Registration Card */}
-        <div className="card shadow-2xl">
-          <div className="card-header">
-            <h2 className="text-xl font-semibold text-gray-900">Create Account</h2>
-            <p className="text-gray-600 text-sm mt-1">Fill in your details below</p>
+          {/* Registration Card */}
+          <div className="card shadow-xl border border-gray-100 rounded-2xl overflow-hidden">
+          <div className="card-header bg-white">
+            <h2 className="text-lg font-semibold text-gray-900">Your details</h2>
+            <p className="text-gray-500 text-sm mt-0.5">Fill in the form below</p>
           </div>
 
           <form onSubmit={submit} className="card-body space-y-6">
@@ -424,18 +445,22 @@ export default function Register() {
                       placeholder="Type to search county..."
                       value={countySearch}
                       onChange={(e) => handleCountySearch(e.target.value)}
-                      onFocus={() => setShowCountyDropdown(true)}
+                      onFocus={() => {
+                        setFilteredCounties(countyList);
+                        setShowCountyDropdown(true);
+                      }}
+                      onBlur={() => setTimeout(() => setShowCountyDropdown(false), 150)}
                       disabled={loading}
                       autoComplete="off"
                     />
-                    {showCountyDropdown && countySearch && (
+                    {showCountyDropdown && (
                       <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
                         {filteredCounties.length > 0 ? (
                           filteredCounties.map((county) => (
                             <button
                               key={county}
                               type="button"
-                              onClick={() => selectCounty(county)}
+                              onMouseDown={(e) => { e.preventDefault(); selectCounty(county); }}
                               className="w-full text-left px-4 py-2 hover:bg-green-100 transition-colors text-sm"
                             >
                               {county}
@@ -523,13 +548,13 @@ export default function Register() {
               />
               <label htmlFor="terms" className="text-sm text-gray-600">
                 I agree to the{" "}
-                <a href="#" className="text-green-600 hover:text-green-700 font-medium">
+                <Link to="/terms" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700 font-medium">
                   Terms of Service
-                </a>{" "}
+                </Link>{" "}
                 and{" "}
-                <a href="#" className="text-green-600 hover:text-green-700 font-medium">
+                <Link to="/privacy" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700 font-medium">
                   Privacy Policy
-                </a>
+                </Link>
               </label>
             </div>
 
@@ -564,11 +589,12 @@ export default function Register() {
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-500">
-            © {new Date().getFullYear()} SmartLivestock. All rights reserved.
-          </p>
+          {/* Footer */}
+          <div className="mt-8 text-center">
+            <p className="text-sm text-gray-500">
+              © {new Date().getFullYear()} SmartLivestock. All rights reserved.
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import Layout from "../components/Layout";
 import { useToast } from "../context/ToastContext";
+import { getAgroStats, type AgroStats } from "../api/agro.api";
 import {
   Store,
   Mail,
@@ -16,6 +18,7 @@ import {
   Calendar,
   Award
 } from "lucide-react";
+import ProviderDocuments from "../components/ProviderDocuments";
 
 type AgroMeta = {
   shop_name?: string;
@@ -33,11 +36,14 @@ type User = {
   email: string;
   role: "agrovet";
   profile_meta: AgroMeta;
+  created_at?: string;
 };
 
 export default function AgroProfile() {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [meta, setMeta] = useState<AgroMeta>({});
+  const [stats, setStats] = useState<AgroStats | null>(null);
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -46,6 +52,18 @@ export default function AgroProfile() {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const data = await getAgroStats();
+        setStats(data);
+      } catch {
+        setStats(null);
+      }
+    })();
+  }, [user]);
 
   const fetchProfile = async () => {
     try {
@@ -323,6 +341,9 @@ export default function AgroProfile() {
               </div>
             </div>
 
+            {/* Professional Documents (KVB, VMD, etc.) */}
+            <ProviderDocuments providerType="agrovet" />
+
             {/* Location Card */}
             <div className="card">
               <div className="card-header">
@@ -417,7 +438,14 @@ export default function AgroProfile() {
                 
                 <div>
                   <p className="text-sm text-gray-500">Member Since</p>
-                  <p className="font-medium text-gray-900">January 2024</p>
+                  <p className="font-medium text-gray-900">
+                    {user?.created_at
+                      ? new Date(user.created_at).toLocaleDateString("en-GB", {
+                          month: "long",
+                          year: "numeric",
+                        })
+                      : "—"}
+                  </p>
                 </div>
                 
                 <div>
@@ -430,7 +458,7 @@ export default function AgroProfile() {
               </div>
             </div>
 
-            {/* Quick Stats Card */}
+            {/* Quick Stats Card - real data */}
             <div className="card">
               <div className="card-header">
                 <h2 className="text-lg font-semibold text-gray-900">Business Overview</h2>
@@ -443,12 +471,10 @@ export default function AgroProfile() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Products</p>
-                      <p className="text-lg font-bold text-gray-900">24</p>
+                      <p className="text-lg font-bold text-gray-900">{stats?.productCount ?? "—"}</p>
                     </div>
                   </div>
-                  <span className="text-sm text-green-600">+12%</span>
                 </div>
-                
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-blue-50 rounded-lg">
@@ -456,12 +482,10 @@ export default function AgroProfile() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Customers</p>
-                      <p className="text-lg font-bold text-gray-900">128</p>
+                      <p className="text-lg font-bold text-gray-900">{stats?.customerCount ?? "—"}</p>
                     </div>
                   </div>
-                  <span className="text-sm text-green-600">+8%</span>
                 </div>
-                
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-purple-50 rounded-lg">
@@ -469,31 +493,61 @@ export default function AgroProfile() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500">Orders This Month</p>
-                      <p className="text-lg font-bold text-gray-900">45</p>
+                      <p className="text-lg font-bold text-gray-900">{stats?.ordersThisMonth ?? "—"}</p>
                     </div>
                   </div>
-                  <span className="text-sm text-green-600">+15%</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-amber-50 rounded-lg">
+                      <Award className="w-4 h-4 text-amber-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Total Revenue</p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {stats != null
+                          ? `KES ${Number(stats.totalRevenue).toLocaleString("en-KE", { maximumFractionDigits: 0 })}`
+                          : "—"}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Quick Actions */}
+            {/* Quick Actions - functional */}
             <div className="card">
               <div className="card-header">
                 <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
               </div>
               <div className="card-body space-y-2">
-                <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <button
+                  type="button"
+                  onClick={() => navigate("/agrovet")}
+                  className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200"
+                >
                   <span className="font-medium text-gray-900">Add New Product</span>
                 </button>
-                <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <button
+                  type="button"
+                  onClick={() => navigate("/agrovet/orders")}
+                  className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200"
+                >
                   <span className="font-medium text-gray-900">View Orders</span>
                 </button>
-                <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <button
+                  type="button"
+                  onClick={() => navigate("/agrovet")}
+                  className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200"
+                >
                   <span className="font-medium text-gray-900">Business Analytics</span>
                 </button>
-                <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                  <span className="font-medium text-gray-900">Update Pricing</span>
+                <button
+                  type="button"
+                  onClick={() => navigate("/agrovet/products")}
+                  className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200"
+                >
+                  <span className="font-medium text-gray-900">Update Pricing / Catalog</span>
                 </button>
               </div>
             </div>

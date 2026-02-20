@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import Layout from '../../components/Layout';
 import { useToast } from '../../context/ToastContext';
@@ -20,6 +20,7 @@ import {
 
 export const CreateClinicalRecord: React.FC = () => {
   const navigate = useNavigate();
+  const { animalId: urlAnimalId } = useParams<{ animalId?: string }>();
   const [formData, setFormData] = useState({
     vetId: '',
     mlDiagnosis: '',
@@ -109,6 +110,16 @@ export const CreateClinicalRecord: React.FC = () => {
     fetchVets();
     fetchAnimals();
   }, [userRole, currentUserId, addToast]);
+
+  useEffect(() => {
+    if (urlAnimalId && animals.length > 0) {
+      const id = Number(urlAnimalId);
+      if (!isNaN(id) && animals.some((a) => a.id === id)) {
+        setSelectedAnimalId(String(id));
+        setSearchMode('browse');
+      }
+    }
+  }, [urlAnimalId, animals]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

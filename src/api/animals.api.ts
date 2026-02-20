@@ -16,4 +16,21 @@ export const createAnimal = async (payload: {
 }) => {
     const res = await api.post('/animal', payload);
     return res.data;
-}
+};
+
+export const updateAnimal = async (id: number, payload: {
+    species?: string;
+    breed?: string;
+    age?: number;
+    weight?: number;
+    tag_id?: string;
+    description?: string;
+}) => {
+    const res = await api.put(`/animal/${id}`, payload);
+    return res.data;
+};
+
+export const deleteAnimal = async (id: number) => {
+    const res = await api.delete(`/animal/${id}`);
+    return res.data;
+};

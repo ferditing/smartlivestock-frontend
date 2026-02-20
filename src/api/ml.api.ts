@@ -13,6 +13,6 @@ export const predict = async (payload: any) => {
 export const predictFromText = async (payload: any) => {
   const res = await api.post('/ml/predict_from_text', payload);
   return res.data;
-};
+}; 
 
 export default { mlHealth, predict, predictFromText };
