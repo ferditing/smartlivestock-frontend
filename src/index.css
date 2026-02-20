@@ -74,3 +74,107 @@
 .animate-slideIn {
 	animation: slideIn 0.3s ease-out;
 }
+
+@keyframes fadeInUp {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.animate-fadeInUp {
+	animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.animate-fadeInUp-delay-1 { animation-delay: 0.1s; opacity: 0; animation-fill-mode: forwards; }
+.animate-fadeInUp-delay-2 { animation-delay: 0.2s; opacity: 0; animation-fill-mode: forwards; }
+.animate-fadeInUp-delay-3 { animation-delay: 0.3s; opacity: 0; animation-fill-mode: forwards; }
+
+/* Hero slide entrance/exit animations */
+@keyframes heroFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes heroFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes heroSlideFromRight {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes heroSlideFromLeft {
+  from { opacity: 0; transform: translateX(-100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes heroSlideFromBottom {
+  from { opacity: 0; transform: translateY(60px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes heroSlideFromTop {
+  from { opacity: 0; transform: translateY(-60px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes heroZoomIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes heroZoomOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(1.08); }
+}
+@keyframes heroScaleFade {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes heroFlipIn {
+  from { opacity: 0; transform: perspective(800px) rotateY(-20deg); }
+  to { opacity: 1; transform: perspective(800px) rotateY(0); }
+}
+@keyframes heroBlurIn {
+  from { opacity: 0; filter: blur(12px); }
+  to { opacity: 1; filter: blur(0); }
+}
+@keyframes heroContentFadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes heroContentFadeDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.hero-enter-fade { animation: heroFadeIn 1s ease-out forwards; }
+.hero-enter-slideRight { animation: heroSlideFromRight 1s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.hero-enter-slideLeft { animation: heroSlideFromLeft 1s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.hero-enter-slideUp { animation: heroSlideFromBottom 1s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.hero-enter-slideDown { animation: heroSlideFromTop 1s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.hero-enter-zoom { animation: heroZoomIn 1s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.hero-enter-scaleFade { animation: heroScaleFade 0.9s ease-out forwards; }
+.hero-enter-flip { animation: heroFlipIn 1s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.hero-enter-blur { animation: heroBlurIn 1s ease-out forwards; }
+.hero-content-up { animation: heroContentFadeUp 0.7s ease-out 0.2s both; }
+.hero-content-down { animation: heroContentFadeDown 0.7s ease-out 0.2s both; }
+.animate-float { animation: float 4s ease-in-out infinite; }
+.animate-scaleIn { animation: scaleIn 0.4s ease-out forwards; }
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}

@@ -1,7 +1,9 @@
+import { useEffect, useState } from "react";
 import Layout from "../../components/Layout";
 import NearbyServicesMap from "./NearbyServicesMap";
 import ReportSymptom from "./ReportSymptom";
 import StatsCard from "../../components/StartsCard";
+import { fetchMyAnimals } from "../../api/animals.api";
 import { 
   PawPrint, 
   Activity, 
@@ -9,22 +11,30 @@ import {
   TrendingUp,
   Bell,
   AlertTriangle,
-  MapPin
+  MapPin,
+  ShoppingCart
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function FarmerDashboard() {
-  // Mock data for demo - replace with actual API calls
+  const navigate = useNavigate();
+  const [animals, setAnimals] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchMyAnimals().then((d) => setAnimals(d || [])).catch(() => {});
+  }, []);
+
   const statsData = {
-    totalAnimals: 24,
+    totalAnimals: animals.length,
     pendingAppointments: 3,
     activeAlerts: 2,
     monthlyReports: 12
   };
 
   const recentActivities = [
-    { id: 1, type: 'appointment', title: 'Vet checkup scheduled', time: '2 hours ago' },
-    { id: 2, type: 'health', title: 'Cow #45 showed symptoms', time: '1 day ago' },
-    { id: 3, type: 'vaccination', title: 'Vaccination due for Goats', time: '3 days ago' },
+    { id: 1, type: 'appointment', title: 'Vet checkup scheduled', time: '2 hours ago', onClick: () => navigate('/farmer/appointments/new') },
+    { id: 2, type: 'health', title: 'Report animal symptoms', time: 'Quick action', onClick: () => document.getElementById('symptom-section')?.scrollIntoView({ behavior: 'smooth' }) },
+    { id: 3, type: 'vaccination', title: 'Add your animals', time: 'Get started', onClick: () => navigate('/farmer/animals') },
   ];
 
   return (
@@ -36,12 +46,15 @@ export default function FarmerDashboard() {
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Farmer Dashboard</h1>
             <p className="text-gray-600 mt-1">Welcome back! Here's your livestock overview</p>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="btn-outline flex items-center gap-2">
+          <div className="flex items-center gap-3 flex-wrap">
+            <button className="btn-outline flex items-center gap-2" onClick={() => navigate('/farmer/profile')}>
               <Bell className="w-4 h-4" />
               Notifications
             </button>
-            <button className="btn-primary flex items-center gap-2">
+            <button
+              className="btn-primary flex items-center gap-2"
+              onClick={() => document.getElementById('symptom-section')?.scrollIntoView({ behavior: 'smooth' })}
+            >
               <Activity className="w-4 h-4" />
               Quick Report
             </button>
@@ -96,8 +109,10 @@ export default function FarmerDashboard() {
                 <NearbyServicesMap />
               </div>
             </div>
-            {/* Symptom Report Modal */}
-            <ReportSymptom />
+            {/* Symptom Report Section */}
+            <div id="symptom-section">
+              <ReportSymptom />
+            </div>
           </div>
 
           {/* Right Column - Activities & Alerts */}
@@ -108,21 +123,40 @@ export default function FarmerDashboard() {
                 <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
               </div>
               <div className="card-body">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  <button className="p-2 sm:p-3 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors flex flex-col items-center justify-center min-h-[90px] sm:min-h-[100px]">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                  <button
+                    onClick={() => navigate('/farmer/animals')}
+                    className="p-2 sm:p-3 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition-colors flex flex-col items-center justify-center min-h-[90px] sm:min-h-[100px]"
+                  >
                     <PawPrint className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 mb-1 sm:mb-2 flex-shrink-0" />
                     <span className="text-xs sm:text-sm font-medium text-gray-900 text-center break-words leading-tight px-1">Add Animal</span>
                   </button>
-                  <button className="p-2 sm:p-3 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors flex flex-col items-center justify-center min-h-[90px] sm:min-h-[100px]">
+                  <button
+                    onClick={() => navigate('/farmer/appointments/new')}
+                    className="p-2 sm:p-3 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors flex flex-col items-center justify-center min-h-[90px] sm:min-h-[100px]"
+                  >
                     <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 mb-1 sm:mb-2 flex-shrink-0" />
                     <span className="text-xs sm:text-sm font-medium text-gray-900 text-center break-words leading-tight px-1">Book Appt</span>
                   </button>
-                  <button className="p-2 sm:p-3 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors flex flex-col items-center justify-center min-h-[90px] sm:min-h-[100px]">
+                  <button
+                    onClick={() => document.getElementById('symptom-section')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="p-2 sm:p-3 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors flex flex-col items-center justify-center min-h-[90px] sm:min-h-[100px]"
+                  >
                     <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 mb-1 sm:mb-2 flex-shrink-0" />
                     <span className="text-xs sm:text-sm font-medium text-gray-900 text-center break-words leading-tight px-1">Health Report</span>
                   </button>
-                  <button className="p-2 sm:p-3 bg-amber-50 hover:bg-amber-100 rounded-lg border border-amber-200 transition-colors flex flex-col items-center justify-center min-h-[90px] sm:min-h-[100px]">
-                    <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600 mb-1 sm:mb-2 flex-shrink-0" />
+                  <button
+                    onClick={() => navigate('/farmer/marketplace')}
+                    className="p-2 sm:p-3 bg-amber-50 hover:bg-amber-100 rounded-lg border border-amber-200 transition-colors flex flex-col items-center justify-center min-h-[90px] sm:min-h-[100px]"
+                  >
+                    <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600 mb-1 sm:mb-2 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm font-medium text-gray-900 text-center break-words leading-tight px-1">Marketplace</span>
+                  </button>
+                  <button
+                    onClick={() => navigate('/farmer/appointments/new')}
+                    className="p-2 sm:p-3 bg-red-50 hover:bg-red-100 rounded-lg border border-red-200 transition-colors flex flex-col items-center justify-center min-h-[90px] sm:min-h-[100px]"
+                  >
+                    <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 mb-1 sm:mb-2 flex-shrink-0" />
                     <span className="text-xs sm:text-sm font-medium text-gray-900 text-center break-words leading-tight px-1">Emergency</span>
                   </button>
                 </div>
@@ -136,7 +170,11 @@ export default function FarmerDashboard() {
               <div className="card-body">
                 <div className="space-y-4">
                   {recentActivities.map(activity => (
-                    <div key={activity.id} className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                    <div
+                      key={activity.id}
+                      onClick={activity.onClick}
+                      className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
+                    >
                       <div className={`p-2 rounded-lg ${
                         activity.type === 'appointment' ? 'bg-blue-100' :
                         activity.type === 'health' ? 'bg-red-100' :
@@ -153,7 +191,10 @@ export default function FarmerDashboard() {
                     </div>
                   ))}
                 </div>
-                <button className="w-full mt-4 text-center text-green-600 hover:text-green-700 font-medium">
+                <button
+                  onClick={() => navigate('/farmer/animals')}
+                  className="w-full mt-4 text-center text-green-600 hover:text-green-700 font-medium"
+                >
                   View All Activities →
                 </button>
               </div>

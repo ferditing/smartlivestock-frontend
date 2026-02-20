@@ -18,6 +18,7 @@ import {
   Shield,
   FileText
 } from "lucide-react";
+import ProviderDocuments from "../components/ProviderDocuments";
 
 type VetMeta = {
   county: string;
@@ -388,6 +389,9 @@ export default function VetProfile() {
                 )}
               </div>
             </div>
+
+            {/* Professional Documents (KVB, VMD, etc.) */}
+            <ProviderDocuments providerType="vet" />
 
             {/* Location Card */}
             <div className="card">

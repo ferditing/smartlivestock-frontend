@@ -8,35 +8,30 @@ export default function RequireRole({
   role: string | string[] | null;
   children: ReactNode;
 }) {
-  const userRole = localStorage.getItem("role");
+  const userRole = (localStorage.getItem("role") || "").trim().toLowerCase();
   const token = localStorage.getItem("token");
 
   if (!token) {
-    console.log("No token, redirecting to login");
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
 
   if (role === null || role === "any") {
-    console.log("Role is 'any' or null, allowing access");
     return <>{children}</>;
   }
 
-  // If role is an array, check if user's role is included
+  // If role is an array, check if user's role is included (case-insensitive)
   if (Array.isArray(role)) {
-    if (userRole && role.includes(userRole)) {
-      console.log("Role matches (array), allowing access");
+    const roles = role.map((r) => String(r).toLowerCase());
+    if (userRole && roles.includes(userRole)) {
       return <>{children}</>;
     }
-    console.log("Role doesn't match any in array, redirecting to login");
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
   }
 
-  // Role is a string
-  if (userRole === role) {
-    console.log("Role matches, allowing access");
+  // Role is a string - case-insensitive comparison
+  if (userRole === String(role).toLowerCase()) {
     return <>{children}</>;
   }
 
-  console.log("Role doesn't match, redirecting to login");
-  return <Navigate to="/login" />;
+  return <Navigate to="/login" replace />;
 }

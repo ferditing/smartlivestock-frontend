@@ -1,6 +1,7 @@
 import Layout from "../../components/Layout";
 import { useEffect, useState } from "react";
 import { fetchPendingReports } from "../../api/vet.api";
+import { fetchVetVerificationRequests, vetVerifyProduct, type VetVerificationProduct } from "../../api/agro.api";
 import api from "../../api/axios";
 import { useToast } from "../../context/ToastContext";
 import {
@@ -14,7 +15,9 @@ import {
   Stethoscope,
   Loader2,
   MapPin,
-  CheckCircle
+  CheckCircle,
+  ShieldCheck,
+  XCircle,
 } from "lucide-react";
 import StatsCard from "../../components/StartsCard";
 
@@ -22,6 +25,8 @@ export default function VetDashboard() {
   const [reports, setReports] = useState<any[]>([]);
   const [appointments, setAppointments] = useState<any[]>([]);
   const [diagnoses, setDiagnoses] = useState<any[]>([]);
+  const [verificationRequests, setVerificationRequests] = useState<VetVerificationProduct[]>([]);
+  const [verifyingId, setVerifyingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     pendingCases: 0,
@@ -36,15 +41,17 @@ export default function VetDashboard() {
       setLoading(true);
       try {
         // Load all data in parallel
-        const [reportsData, appointmentsData, diagnosesData] = await Promise.all([
+        const [reportsData, appointmentsData, diagnosesData, verificationData] = await Promise.all([
           fetchPendingReports().catch(() => []),
           api.get("/appointments/assigned").then(res => res.data).catch(() => []),
-          api.get("/appointments/diagnoses").then(res => res.data).catch(() => [])
+          api.get("/appointments/diagnoses").then(res => res.data).catch(() => []),
+          fetchVetVerificationRequests().catch(() => []),
         ]);
 
         setReports(reportsData);
         setAppointments(appointmentsData);
         setDiagnoses(diagnosesData);
+        setVerificationRequests(verificationData);
         
         // Calculate stats
         const today = new Date().toDateString();
@@ -137,6 +144,110 @@ export default function VetDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Cases & Appointments */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Product verification requests (ecommerce trust) */}
+            <div className="card">
+              <div className="card-header">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-50 rounded-lg">
+                      <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-900">Product verification</h2>
+                      <p className="text-sm text-gray-500">Agrovet products pending vet review</p>
+                    </div>
+                  </div>
+                  <span className="badge bg-emerald-100 text-emerald-800">
+                    {verificationRequests.length} pending
+                  </span>
+                </div>
+              </div>
+              <div className="card-body">
+                {verificationRequests.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3" />
+                    <p className="text-gray-600">No products awaiting verification</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {verificationRequests.slice(0, 6).map((p) => (
+                      <div
+                        key={p.id}
+                        className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 truncate">{p.name}</p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {p.shop_name || "Agrovet shop"} · Stock: {p.quantity ?? 0} · KES {Number(p.price).toLocaleString()}
+                            </p>
+                            {p.description && (
+                              <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                                {p.description}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <button
+                              type="button"
+                              disabled={verifyingId === p.id}
+                              onClick={async () => {
+                                setVerifyingId(p.id);
+                                try {
+                                  await vetVerifyProduct(p.id, true, "Approved");
+                                  addToast("success", "Verified", "Product approved and marked as vet verified.");
+                                  const refreshed = await fetchVetVerificationRequests().catch(() => []);
+                                  setVerificationRequests(refreshed);
+                                } catch (e: any) {
+                                  addToast("error", "Error", e?.response?.data?.error ?? "Failed to verify");
+                                } finally {
+                                  setVerifyingId(null);
+                                }
+                              }}
+                              className="btn-primary px-3 py-2 text-sm flex items-center gap-2"
+                            >
+                              {verifyingId === p.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <CheckCircle className="w-4 h-4" />
+                              )}
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              disabled={verifyingId === p.id}
+                              onClick={async () => {
+                                setVerifyingId(p.id);
+                                try {
+                                  await vetVerifyProduct(p.id, false, "Rejected");
+                                  addToast("success", "Updated", "Product rejected (not verified).");
+                                  const refreshed = await fetchVetVerificationRequests().catch(() => []);
+                                  setVerificationRequests(refreshed);
+                                } catch (e: any) {
+                                  addToast("error", "Error", e?.response?.data?.error ?? "Failed to update");
+                                } finally {
+                                  setVerifyingId(null);
+                                }
+                              }}
+                              className="btn-outline px-3 py-2 text-sm flex items-center gap-2"
+                            >
+                              <XCircle className="w-4 h-4" />
+                              Reject
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {verificationRequests.length > 6 && (
+                      <p className="text-xs text-gray-500">
+                        Showing 6 of {verificationRequests.length}. (Next step: add a “View all” page.)
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Pending Cases */}
             <div className="card">
               <div className="card-header">
