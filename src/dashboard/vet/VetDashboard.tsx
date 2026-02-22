@@ -8,7 +8,6 @@ import {
   Calendar,
   Activity,
   Users,
-  TrendingUp,
   Clock,
   AlertCircle,
   FileText,

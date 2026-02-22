@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import axios from "../../api/axios";
 import Layout from "../../components/Layout";
 import { useToast } from "../../context/ToastContext";
@@ -8,7 +8,6 @@ import {
   User,
   CheckCircle,
   XCircle,
-  MoreVertical,
   Filter,
   Search,
   Loader2,

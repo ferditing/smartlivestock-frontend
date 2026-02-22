@@ -10,9 +10,7 @@ import {
   User,
   Activity,
   FileText,
-  Thermometer,
   Clock,
-  CheckCircle,
   AlertCircle,
   Stethoscope,
   PawPrint

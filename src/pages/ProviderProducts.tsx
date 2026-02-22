@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Layout from "../components/Layout";
 import ProductCatalog from "../dashboard/agro/ProductCatalog";
-import { Package, Store, MapPin, Phone, Loader2, AlertCircle } from "lucide-react";
+import { Store, MapPin, Phone, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "../context/ToastContext";
 
 type ProviderData = {

@@ -7,12 +7,10 @@ import {
   AlertCircle,
   Clock,
   User,
-  MapPin,
   ChevronRight,
   Loader2,
   Filter,
   Search,
-  Calendar
 } from "lucide-react";
 
 export default function IncomingCases() {

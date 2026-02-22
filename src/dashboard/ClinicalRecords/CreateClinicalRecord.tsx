@@ -10,7 +10,6 @@ import {
   Activity,
   Search,
   Loader2,
-  Calendar,
   Stethoscope,
   AlertCircle,
   CheckCircle

@@ -8,7 +8,6 @@ import {
   updateCartItem,
   removeFromCart,
   initializePaystackPayment,
-  clearCart,
   checkout,
   type CartItem,
 } from "../../api/marketplace.api";

@@ -14,7 +14,6 @@ import {
   X,
   Loader2,
   Stethoscope,
-  GraduationCap,
   Shield,
   FileText
 } from "lucide-react";

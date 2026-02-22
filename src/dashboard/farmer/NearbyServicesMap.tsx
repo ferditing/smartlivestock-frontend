@@ -31,7 +31,7 @@ type Provider = {
 // filter state type for the UI
 type ProviderType = "all" | "vet" | "agrovet";
 
-function ClusterLayer({ providers, onNavigate, role }: { providers: Provider[]; onNavigate: (id: number, action?: string) => void; role: string | null; }) {
+function ClusterLayer({ providers, onNavigate, role:_role }: { providers: Provider[]; onNavigate: (id: number, action?: string) => void; role: string | null; }) {
   const map = useMap();
 
   useEffect(() => {
@@ -73,7 +73,6 @@ function ClusterLayer({ providers, onNavigate, role }: { providers: Provider[]; 
         }
 
         const marker = L.marker([lat, lng]);
-        const roleStr = role ? String(role).toLowerCase() : "";
         const isProviderVet = p.provider_type === 'vet';
         const linkText = isProviderVet ? 'Book Appointment' : 'View Products';
         const action = isProviderVet ? 'book' : 'view';
