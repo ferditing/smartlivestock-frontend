@@ -32,7 +32,7 @@ export default function ClinicalRecordsList() {
   useEffect(() => {
     const fetchRecords = async () => {
       try {
-        const response = await axios.get('/api/clinical-records', {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/clinical-records`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
