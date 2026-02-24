@@ -10,9 +10,7 @@ import {
   User,
   Activity,
   FileText,
-  Thermometer,
   Clock,
-  CheckCircle,
   AlertCircle,
   Stethoscope,
   PawPrint
@@ -58,7 +56,7 @@ export const ClinicalRecordDetail: React.FC = () => {
     const fetchRecord = async () => {
       try {
         const response = await axios.get(
-          `/api/clinical-records/${recordId}`,
+           `${import.meta.env.VITE_API_URL}/clinical-records/${recordId}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('token')}`

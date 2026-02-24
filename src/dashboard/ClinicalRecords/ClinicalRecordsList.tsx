@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Layout from '../../components/Layout';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -32,7 +32,7 @@ export default function ClinicalRecordsList() {
   useEffect(() => {
     const fetchRecords = async () => {
       try {
-        const response = await axios.get('/api/clinical-records', {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/clinical-records`, {
           headers: {
             Authorization: `Bearer ${token}`
           }

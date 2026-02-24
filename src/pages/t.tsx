@@ -27,7 +27,7 @@ type LocationState = {
 
 export default function Register() {
   const navigate = useNavigate();
-  const kenyaData: Record<string, string[]> = rawKenyaData;
+  const kenyaData: Record<string, Record<string, string[]>> = rawKenyaData;
   const { addToast } = useToast();
 
   const [form, setForm] = useState({
@@ -92,8 +92,8 @@ export default function Register() {
 
           let chosenSub: string | undefined = undefined;
           if (chosenCounty && kenyaData[chosenCounty]) {
-            const subs = kenyaData[chosenCounty];
-            const matchedSub = subs.find(s => {
+            const subs = Object.keys(kenyaData[chosenCounty]);
+            const matchedSub = subs.find((s: string) => {
               const ns = norm(s);
               const na = norm(addrSubRaw);
               return ns === na || ns.includes(na) || na.includes(ns);
@@ -112,7 +112,7 @@ export default function Register() {
           addToast('warning', 'Location Details', 'Could not fetch detailed location info');
         }
       },
-      (err) => {
+      (_err) => { 
         setGpsStatus('denied');
         addToast('error', 'Location Access', 'Please enable location access or select manually');
       },
@@ -416,7 +416,7 @@ export default function Register() {
                     >
                       <option value="">Select Sub-county</option>
                       {location.county && kenyaData[location.county] &&
-                        kenyaData[location.county].map((sc: string) => (
+                        Object.keys(kenyaData[location.county]).map((sc: string) => (
                           <option key={sc} value={sc}>
                             {sc}
                           </option>

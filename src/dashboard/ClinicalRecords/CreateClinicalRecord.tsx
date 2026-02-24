@@ -10,13 +10,12 @@ import {
   Activity,
   Search,
   Loader2,
-  Calendar,
   Stethoscope,
   AlertCircle,
   CheckCircle
 } from 'lucide-react';
 
-// ... (interfaces remain the same)
+const API = import.meta.env.VITE_API_URL;
 
 export const CreateClinicalRecord: React.FC = () => {
   const navigate = useNavigate();
@@ -49,7 +48,7 @@ export const CreateClinicalRecord: React.FC = () => {
 
     setSearchLoading(true);
     try {
-      const response = await axios.get(`/api/animal/search?reg_no=${encodeURIComponent(regNo)}`, {
+      const response = await axios.get(`${API}animal/search?reg_no=${encodeURIComponent(regNo)}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       
@@ -76,7 +75,7 @@ export const CreateClinicalRecord: React.FC = () => {
 
     const fetchVets = async () => {
       try {
-        const response = await axios.get('/api/users?role=vet', {
+        const response = await axios.get(`${API}/users?role=vet`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         
@@ -98,7 +97,7 @@ export const CreateClinicalRecord: React.FC = () => {
 
     const fetchAnimals = async () => {
       try {
-        const response = await axios.get('/api/animal', {
+        const response = await axios.get(`${API}/animal`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         setAnimals(response.data);
@@ -181,7 +180,7 @@ export const CreateClinicalRecord: React.FC = () => {
 
     try {
       await axios.post(
-        '/api/clinical-records',
+        `${API}/clinical-records`,
         {
           animalId: animalId,
           ...(userRole !== 'vet' && { vetId: Number(finalVetId) }),
