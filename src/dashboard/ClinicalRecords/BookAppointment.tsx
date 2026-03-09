@@ -7,7 +7,13 @@ import { useToast } from "../../context/ToastContext";
 import { Calendar, Clock, User, FileText, Loader2, MapPin } from "lucide-react";
 
 type Provider = { id: number; name: string; type?: string; distance?: number };
-type Report = { id: number; title?: string; animal_name?: string };
+type Report = { 
+  id: number; 
+  animal_type?: string; 
+  symptom_text?: string;
+  status?: string;
+  created_at?: string;
+};
 
 export default function BookAppointment() {
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -27,7 +33,7 @@ export default function BookAppointment() {
     axios
       .get("/reports/my")
       .then((r) => setReports(r.data))
-      .catch(() => {});
+      .catch(() => addToast("error", "Reports", "Failed to load your reports"));
 
     const providerParam = searchParams.get("provider");
     if (providerParam) {
@@ -218,9 +224,13 @@ export default function BookAppointment() {
               >
                 <option value="">No report selected</option>
                 {reports.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.title || `Report #${r.id}`} {r.animal_name && `- ${r.animal_name}`}
-                  </option>
+                <option key={r.id} value={r.id}>
+                  {r.animal_type ? `${r.animal_type} Report` : `Report #${r.id}`}
+                  {r.symptom_text && ` - ${r.symptom_text.length > 40 
+                    ? r.symptom_text.slice(0, 40) + "..." 
+                    : r.symptom_text}`}
+                  {r.created_at && ` (${new Date(r.created_at).toLocaleDateString()})`}
+                </option>
                 ))}
               </select>
             </div>
