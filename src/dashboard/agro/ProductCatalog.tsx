@@ -69,10 +69,10 @@ export default function ProductCatalog({ providerId, isOwner, refreshKey }: Prop
     try {
       if (isOwner) {
         const data = await fetchMyProducts();
-        setProducts(data);
+        setProducts(Array.isArray(data) ? data : []);
       } else if (providerId) {
         const data = await fetchProviderProducts(providerId);
-        setProducts(data);
+        setProducts(Array.isArray(data) ? data : []);
       }
     } catch (error) {
       console.error("Failed to fetch products", error);
