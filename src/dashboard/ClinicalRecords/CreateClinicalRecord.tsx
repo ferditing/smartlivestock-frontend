@@ -48,7 +48,7 @@ export const CreateClinicalRecord: React.FC = () => {
 
     setSearchLoading(true);
     try {
-      const response = await axios.get(`${API}animal/search?reg_no=${encodeURIComponent(regNo)}`, {
+      const response = await axios.get(`${API}/animal/search?reg_no=${encodeURIComponent(regNo)}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       
