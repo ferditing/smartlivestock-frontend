@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import RequireRole from "./auth/RequireRole";
 import { ToastProvider } from "./context/ToastContext";
+import { NotificationProvider } from "./context/NotificationContext";
+import { NotificationToast } from "./components/NotificationToast";
 import ClinicalRecordsList from './dashboard/ClinicalRecords/ClinicalRecordsList';
 import { ClinicalRecordDetail } from './dashboard/ClinicalRecords/ClinicalRecordDetail';
 import { CreateClinicalRecord } from './dashboard/ClinicalRecords/CreateClinicalRecord';
@@ -27,6 +29,7 @@ import VetDashboard from "./dashboard/vet/VetDashboard";
 import IncomingCases from "./dashboard/vet/IncomingCases";
 import CaseDetails from "./dashboard/vet/CaseDetails";
 import AgroDashboard from "./dashboard/agro/AgroDashboard";
+import AgroWallet from "./dashboard/agro/AgroWallet";
 import ProductCatalog from "./dashboard/agro/ProductCatalog";
 import AgrovetOrders from "./dashboard/agro/AgrovetOrders";
 
@@ -49,10 +52,12 @@ import FarmerProfile from "./profile/FarmerProfile";
 import VetProfile from "./profile/VetProfile";
 import AgroProfile from "./profile/AgroProfile";
 import SubAdminProfile from "./profile/SubAdminProfile";
+import NotificationsPage from "./dashboard/common/NotificationsPage";
 
 export default function App() {
   return (
     <ToastProvider>
+      <NotificationProvider>
       <Routes>
       {/* ---------------- PUBLIC ---------------- */}
       <Route path="/" element={<Landing />} />
@@ -105,10 +110,26 @@ export default function App() {
         }
       />
       <Route
+        path="/farmer/providers/:id"
+        element={
+          <RequireRole role="farmer">
+            <ProviderProducts />
+          </RequireRole>
+        }
+      />
+      <Route
         path="/farmer"
         element={
           <RequireRole role="farmer">
             <FarmerDashboard />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/farmer/notifications"
+        element={
+          <RequireRole role="farmer">
+            <NotificationsPage role="farmer" />
           </RequireRole>
         }
       />
@@ -119,6 +140,14 @@ export default function App() {
         element={
           <RequireRole role="vet">
             <VetDashboard />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/vet/notifications"
+        element={
+          <RequireRole role="vet">
+            <NotificationsPage role="vet" />
           </RequireRole>
         }
       />
@@ -173,6 +202,22 @@ export default function App() {
           </RequireRole>
         }
       />
+      <Route
+        path="/agrovet/wallet"
+        element={
+          <RequireRole role="agrovet">
+            <AgroWallet />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/agrovet/notifications"
+        element={
+          <RequireRole role="agrovet">
+            <NotificationsPage role="agrovet" />
+          </RequireRole>
+        }
+      />
 
       <Route
         path="/agrovet/profile"
@@ -192,11 +237,11 @@ export default function App() {
         }
       />
 
-      {/* ---------------- FARMER → PROVIDER PRODUCTS ---------------- */}
+      {/* ---------------- PROVIDER PRODUCTS (farmer, vet, agrovet can view) ---------------- */}
       <Route
         path="/providers/:id"
         element={
-          <RequireRole role="farmer">
+          <RequireRole role={["farmer", "vet", "agrovet"]}>
             <ProviderProducts />
           </RequireRole>
         }
@@ -251,6 +296,14 @@ export default function App() {
         element={
           <RequireRole role="admin">
             <AdminDashboard />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/admin/notifications"
+        element={
+          <RequireRole role="admin">
+            <NotificationsPage role="admin" />
           </RequireRole>
         }
       />
@@ -313,6 +366,14 @@ export default function App() {
         }
       />
       <Route
+        path="/subadmin/notifications"
+        element={
+          <RequireRole role="subadmin">
+            <NotificationsPage role="subadmin" />
+          </RequireRole>
+        }
+      />
+      <Route
         path="/subadmin/users"
         element={
           <RequireRole role="subadmin">
@@ -348,6 +409,8 @@ export default function App() {
       {/* ---------------- FALLBACK ---------------- */}
       <Route path="*" element={<Navigate to="/" />} />
       </Routes>
+      <NotificationToast maxNotifications={3} autoCloseDuration={5000} />
+      </NotificationProvider>
     </ToastProvider>
   );
 }

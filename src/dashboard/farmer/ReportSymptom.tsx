@@ -13,6 +13,7 @@ import {
   Brain,
   ClipboardCheck
 } from "lucide-react";
+import Button from "../../components/Button";
 
 const DEFAULT_ANIMALS = ["Cow", "Goat", "Sheep", "Pig", "Chicken", "Calf"];
 
@@ -209,23 +210,15 @@ export default function ReportSymptom() {
               onChange={(e) => setFreeText(e.target.value)}
               disabled={textLoading}
             />
-            <button
+            <Button
               onClick={submitText}
-              disabled={textLoading}
-              className="btn-outline flex items-center justify-center gap-2 w-full sm:w-auto"
+              variant="outline"
+              loading={textLoading}
+              className="w-full sm:w-auto"
+              icon={<Brain className="w-4 h-4" />}
             >
-              {textLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Analyzing...
-                </>
-              ) : (
-                <>
-                  <Brain className="w-4 h-4" />
-                  Analyze with AI
-                </>
-              )}
-            </button>
+              Analyze with AI
+            </Button>
           </div>
         </div>
 
@@ -319,23 +312,15 @@ export default function ReportSymptom() {
 
           {/* Submit Button */}
           <div className="mt-8">
-            <button
+            <Button
               onClick={submit}
-              disabled={loading}
-              className="w-full btn-primary flex items-center justify-center gap-2 py-3"
+              variant="primary"
+              loading={loading}
+              className="w-full py-3"
+              icon={<ClipboardCheck className="w-5 h-5" />}
             >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <ClipboardCheck className="w-5 h-5" />
-                  Submit & Get Prediction
-                </>
-              )}
-            </button>
+              Submit & Get Prediction
+            </Button>
           </div>
 
           {/* Free Text Prediction Result */}
