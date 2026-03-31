@@ -1,7 +1,7 @@
 // ReportSymptom.tsx - Updated
 import { useEffect, useState } from "react";
 import { reportSymptom } from "../../api/farmer.api";
-import { mlHealth, predict, predictFromText } from "../../api/ml.api";
+import { mlHealth, predict, predictFromText, getSymptomsByAnimal } from "../../api/ml.api";
 import { useToast } from "../../context/ToastContext";
 import {
   Thermometer,
@@ -14,7 +14,7 @@ import {
   ClipboardCheck
 } from "lucide-react";
 
-const DEFAULT_ANIMALS = ["Cow", "Goat", "Sheep", "Pig", "Chicken", "Calf"];
+const DEFAULT_ANIMALS = ["Cow", "Goat", "Sheep", "Poultry"];
 
 export default function ReportSymptom() {
   const [animals, setAnimals] = useState<string[]>(DEFAULT_ANIMALS);
@@ -47,7 +47,7 @@ export default function ReportSymptom() {
         }
 
         const symptomKeys = feats
-          .filter((f) => !f.startsWith("animal_") && f !== "age" && f !== "body_temperature")
+          .filter((f) => !f.startsWith("animal_") && !f.startsWith("interact_") && f !== "age" && f !== "body_temperature")
           .map((f) => f.replace(/_/g, " "))
           .filter(Boolean);
         
@@ -58,6 +58,33 @@ export default function ReportSymptom() {
         setAvailableSymptoms(["fever", "cough", "loss of appetite", "diarrhea", "lethargy"]);
       });
   }, []);
+
+  // Fetch animal-specific symptoms when animal selection changes
+  useEffect(() => {
+    if (animal) {
+      const animalLower = animal.toLowerCase();
+      console.log(`[ReportSymptom] Fetching symptoms for animal: ${animalLower}`);
+      
+      getSymptomsByAnimal(animalLower)
+        .then((res) => {
+          console.log(`[ReportSymptom] Got response for ${animalLower}:`, res);
+          
+          if (res.symptoms && res.symptoms.length > 0) {
+            const displaySymptoms = res.symptoms
+              .map((s: string) => s.replace(/_/g, " "))
+              .filter(Boolean);
+            setAvailableSymptoms(displaySymptoms);
+            console.log(`[ReportSymptom] Loaded ${displaySymptoms.length} symptoms for ${animal}. Symptoms:`, displaySymptoms);
+          } else {
+            console.warn(`[ReportSymptom] No symptoms returned for ${animal}`);
+          }
+        })
+        .catch((err) => {
+          console.error(`[ReportSymptom] Failed to fetch symptoms for ${animal}:`, err?.response?.status, err?.response?.data || err?.message);
+          // Don't clear available symptoms on error, keep existing ones
+        });
+    }
+  }, [animal]);
 
   const toggleSymptom = (s: string) => {
     setSymptoms((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
@@ -131,15 +158,16 @@ export default function ReportSymptom() {
     setFreeTextPrediction(null);
 
     try {
-      // Try ML normalize/predict first, fall back to local extraction
+      // For free text, let the backend auto-detect animal from text
+      // Don't force the dropdown value - backend will extract from symptom text
       const payload = {
-        animal: animal ? animal.toLowerCase() : undefined,
+        animal: '',  // Empty animal to force backend to detect from text
         symptom_text: freeText,
         age: age ? Number(age) : 0,
         body_temperature: temp ? Number(temp) : 0,
       };
 
-      console.log('[ReportSymptom FreeText] Calling predictFromText with:', payload);
+      console.log('[ReportSymptom FreeText] Calling predictFromText with free text detection:', payload);
       let ml: any = null;
       try {
         ml = await predictFromText(payload);
@@ -170,7 +198,11 @@ export default function ReportSymptom() {
         addToast('success', 'Symptoms Found', `Identified: ${canonical.join(', ')}`);
       }
 
-      await reportSymptom(freeText, { animal_id: undefined, animal_type: ml?.animal_type || animal, canonical_symptoms: canonical });
+      // Use detected animal from ML, NEVER the dropdown value for free text
+      const detectedAnimal = ml?.animal || ml?.animal_type;
+      console.log('[ReportSymptom FreeText] Using detected animal:', detectedAnimal);
+      
+      await reportSymptom(freeText, { animal_id: undefined, animal_type: detectedAnimal, canonical_symptoms: canonical });
       addToast('success', 'Report Submitted', 'Symptoms extracted and report created successfully');
     } catch (err: any) {
       console.error(err);
