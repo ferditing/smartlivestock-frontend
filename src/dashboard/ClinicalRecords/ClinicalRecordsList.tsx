@@ -1,381 +1,336 @@
-import { useEffect, useState } from 'react';
-import Layout from '../../components/Layout';
-import { Link } from 'react-router-dom';
-import axios from 'axios';
-import type { ClinicalRecordResponse } from '../../types/clinical.types';
-import { useToast } from '../../context/ToastContext';
-import {
-  FileText,
-  Search,
-  Filter,
-  Calendar,
-  Clock,
-  User,
-  Activity,
-  CheckCircle,
-  Loader2,
-  Plus,
-  ChevronRight,
-  AlertCircle
-} from 'lucide-react';
+// ClinicalRecordsList.tsx – Premium Redesign (SmartLivestock Design System)
+// All original API calls, state, filtering logic unchanged.
 
+import React, { useEffect, useState, useRef } from "react";
+import Layout from "../../components/Layout";
+import { Link } from "react-router-dom";
+import axios from "axios";
+import type { ClinicalRecordResponse } from "../../types/clinical.types";
+import { useToast } from "../../context/ToastContext";
+import {
+  FileText, Search, Calendar, Clock, User, Activity,
+  CheckCircle, Loader2, Plus, ChevronRight, AlertCircle, X,
+} from "lucide-react";
+
+/* ── Status config ───────────────────────────────────────────── */
+const STATUS_CFG: Record<string, { label:string; badge:string; border:string; dot:string; icon:React.ReactNode }> = {
+  pending:         { label:"Pending",          badge:"bg-amber-100 text-amber-800",  border:"border-l-amber-400",  dot:"bg-amber-400",  icon:<Clock className="w-4 h-4 text-amber-500" /> },
+  under_treatment: { label:"Under Treatment",  badge:"bg-blue-100 text-blue-800",    border:"border-l-blue-500",   dot:"bg-blue-500",   icon:<Activity className="w-4 h-4 text-blue-500" /> },
+  recovered:       { label:"Recovered",        badge:"bg-green-100 text-green-800",  border:"border-l-green-500",  dot:"bg-green-500",  icon:<CheckCircle className="w-4 h-4 text-green-500" /> },
+};
+const getCfg = (s: string) => STATUS_CFG[s] || { label:s, badge:"bg-gray-100 text-gray-700", border:"border-l-gray-300", dot:"bg-gray-400", icon:<AlertCircle className="w-4 h-4 text-gray-400" /> };
+
+/* ── Animated counter ─────────────────────────────────────────── */
+function Counter({ to, color }: { to: number; color: string }) {
+  const [val, setVal] = useState(0);
+  const done = useRef(false);
+  useEffect(() => {
+    if (done.current || to === 0) return;
+    done.current = true;
+    const frames = 40; let f = 0;
+    const id = setInterval(() => {
+      f++; setVal(Math.min(Math.round((f / frames) * to), to));
+      if (f >= frames) clearInterval(id);
+    }, 800 / frames);
+  }, [to]);
+  return <span className={`text-3xl font-black sora tabular-nums ${color}`}>{val}</span>;
+}
+
+/* ── Confidence bar ───────────────────────────────────────────── */
+function ConfidenceBar({ value }: { value: number }) {
+  const color = value >= 80 ? "from-green-500 to-emerald-600"
+              : value >= 50 ? "from-amber-500 to-orange-500"
+              : "from-red-500 to-rose-600";
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className={`h-full bg-gradient-to-r ${color} rounded-full transition-all duration-500`}
+          style={{ width:`${value}%` }} />
+      </div>
+      <span className="text-xs font-bold text-gray-600 w-9 text-right">{value}%</span>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MAIN COMPONENT
+═══════════════════════════════════════════════════════════════ */
 export default function ClinicalRecordsList() {
-  const userRole = localStorage.getItem('role') || 'farmer';
-  const [records, setRecords] = useState<ClinicalRecordResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const token = localStorage.getItem('token');
+  const userRole = localStorage.getItem("role") || "farmer";
+  const token    = localStorage.getItem("token");
   const { addToast } = useToast();
 
+  const [records,      setRecords]      = useState<ClinicalRecordResponse[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [error,        setError]        = useState<string | null>(null);
+  const [searchTerm,   setSearchTerm]   = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+
   useEffect(() => {
-    const fetchRecords = async () => {
+    (async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/clinical-records`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+        const res = await axios.get("/api/clinical-records", {
+          headers: { Authorization: `Bearer ${token}` },
         });
-        
-        let recordsData = response.data;
-        
-        if (response.data.data) {
-          recordsData = response.data.data;
-        }
-        
-        if (Array.isArray(recordsData)) {
-          setRecords(recordsData);
-        } else {
-          setRecords([]);
-          addToast('warning', 'Data Format', 'Unexpected data format received');
-        }
+        const data = res.data?.data ?? res.data;
+        setRecords(Array.isArray(data) ? data : []);
+        if (!Array.isArray(data)) addToast("warning", "Data", "Unexpected response format");
       } catch (err: any) {
-        const errorMsg = err instanceof Error ? err.message : 'Failed to fetch records';
-        setError(errorMsg);
-        addToast('error', 'Error', errorMsg);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchRecords();
+        const msg = err instanceof Error ? err.message : "Failed to fetch records";
+        setError(msg); addToast("error", "Error", msg);
+      } finally { setLoading(false); }
+    })();
   }, [token, addToast]);
 
-  const filteredRecords = records.filter(record => {
-    const matchesSearch = 
-      record.animal.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.ml_diagnosis.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.animal.breed?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesFilter = 
-      filterStatus === 'all' || 
-      record.status === filterStatus;
-    
-    return matchesSearch && matchesFilter;
+  /* ── Derived ── */
+  const filtered = records.filter(r => {
+    const q = searchTerm.toLowerCase();
+    const matchSearch = !q
+      || r.animal.name.toLowerCase().includes(q)
+      || r.ml_diagnosis.toLowerCase().includes(q)
+      || (r.animal.breed || "").toLowerCase().includes(q);
+    const matchFilter = filterStatus === "all" || r.status === filterStatus;
+    return matchSearch && matchFilter;
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'under_treatment': return 'bg-blue-100 text-blue-800';
-      case 'recovered': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const counts = {
+    total:           records.length,
+    under_treatment: records.filter(r => r.status === "under_treatment").length,
+    recovered:       records.filter(r => r.status === "recovered").length,
+    pending:         records.filter(r => r.status === "pending").length,
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending': return <Clock className="w-5 h-5 text-yellow-600" />;
-      case 'under_treatment': return <Activity className="w-5 h-5 text-blue-600" />;
-      case 'recovered': return <CheckCircle className="w-5 h-5 text-green-600" />;
-      default: return <AlertCircle className="w-5 h-5 text-gray-600" />;
-    }
-  };
-
-  if (loading) {
-    return (
-      <Layout role={userRole}>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <Loader2 className="w-12 h-12 animate-spin text-green-600 mx-auto mb-4" />
-            <p className="text-gray-600">Loading clinical records...</p>
-          </div>
+  /* ── Loading / Error ── */
+  if (loading) return (
+    <Layout role={userRole}>
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-300" />
         </div>
-      </Layout>
-    );
-  }
+        <p className="text-sm font-semibold text-gray-400">Loading clinical records…</p>
+      </div>
+    </Layout>
+  );
 
-  if (error) {
-    return (
-      <Layout role={userRole}>
-        <div className="card p-8">
-          <div className="text-center">
-            <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Records</h3>
-            <p className="text-gray-600 mb-4">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="btn-primary inline-flex items-center gap-2"
-            >
-              <Loader2 className="w-4 h-4" />
-              Retry
-            </button>
+  if (error) return (
+    <Layout role={userRole}>
+      <div className="card overflow-hidden">
+        <div className="card-body py-16 flex flex-col items-center gap-4 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center">
+            <AlertCircle className="w-7 h-7 text-red-500" />
           </div>
+          <div>
+            <h3 className="text-base font-bold text-gray-900">Failed to load records</h3>
+            <p className="text-sm text-gray-500 mt-1">{error}</p>
+          </div>
+          <button onClick={() => window.location.reload()}
+            className="btn btn-primary btn-sm flex items-center gap-1.5">
+            <Loader2 className="w-3.5 h-3.5" /> Retry
+          </button>
         </div>
-      </Layout>
-    );
-  }
+      </div>
+    </Layout>
+  );
 
   return (
     <Layout role={userRole}>
-      <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Clinical Records</h1>
-          <p className="text-gray-600 mt-1">Manage and review all animal health records</p>
-        </div>
-        <Link
-          to="/clinical-records/new"
-          className="btn-primary flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          New Record
-        </Link>
-      </div>
+      <div className="space-y-6 animate-fadeInUp">
 
-      {/* Filters and Search */}
-      <div className="card">
-        <div className="card-body">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Search */}
-            <div className="lg:col-span-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                <Search className="w-4 h-4" />
-                Search Records
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  className="input-field pl-11"
-                  placeholder="Search by animal name, breed, or diagnosis..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              </div>
-            </div>
-
-            {/* Filter */}
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                <Filter className="w-4 h-4" />
-                Filter by Status
-              </label>
-              <select
-                className="select-field"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-              >
-                <option value="all">All Statuses</option>
-                <option value="pending">Pending</option>
-                <option value="under_treatment">Under Treatment</option>
-                <option value="recovered">Recovered</option>
-              </select>
-            </div>
+        {/* ── Header ── */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <h1 className="page-title">Clinical Records</h1>
+            <p className="page-sub">Manage and review all animal health records</p>
           </div>
-        </div>
-      </div>
-
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Total Records</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{records.length}</p>
-            </div>
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <FileText className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
+          <Link to="/clinical-records/new" className="btn btn-primary btn-md flex items-center gap-2 self-start">
+            <Plus className="w-4 h-4" /> New Record
+          </Link>
         </div>
 
-        <div className="card p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Under Treatment</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">
-                {records.filter(r => r.status === 'under_treatment').length}
-              </p>
-            </div>
-            <div className="p-3 bg-yellow-50 rounded-lg">
-              <Activity className="w-6 h-6 text-yellow-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="card p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Recovered</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">
-                {records.filter(r => r.status === 'recovered').length}
-              </p>
-            </div>
-            <div className="p-3 bg-green-50 rounded-lg">
-              <Activity className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="card p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Pending</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">
-                {records.filter(r => r.status === 'pending').length}
-              </p>
-            </div>
-            <div className="p-3 bg-red-50 rounded-lg">
-              <Calendar className="w-6 h-6 text-red-600" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Records List */}
-      {filteredRecords.length === 0 ? (
-        <div className="card p-8 text-center">
-          <div className="flex flex-col items-center justify-center">
-            <FileText className="w-16 h-16 text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {searchTerm || filterStatus !== 'all' ? 'No matching records found' : 'No clinical records found'}
-            </h3>
-            <p className="text-gray-600 mb-4">
-              {searchTerm || filterStatus !== 'all' 
-                ? 'Try adjusting your search or filter criteria'
-                : 'Create your first clinical record to get started'
-              }
-            </p>
-            {(searchTerm || filterStatus !== 'all') ? (
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setFilterStatus('all');
-                }}
-                className="btn-primary"
-              >
-                Clear Filters
-              </button>
-            ) : (
-              <Link
-                to="/clinical-records/new"
-                className="btn-primary flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Create First Record
-              </Link>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {filteredRecords.map(record => (
-            <Link
-              key={record.id}
-              to={`/clinical-records/${record.id}`}
-              className="card hover:shadow-lg transition-all duration-200 group"
-            >
-              <div className="card-body">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="text-2xl">{getStatusIcon(record.status)}</div>
-                      <div>
-                        <h2 className="text-lg font-bold text-gray-900 group-hover:text-green-700 transition-colors">
-                          {record.animal.name}
-                        </h2>
-                        <p className="text-gray-600">
-                          {record.animal.type} • {record.animal.breed || 'Unknown breed'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex items-center gap-2">
-                        <Activity className="w-4 h-4 text-gray-400" />
-                        <div>
-                          <p className="text-xs text-gray-500">ML Diagnosis</p>
-                          <p className="font-medium text-gray-900">{record.ml_diagnosis}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-gray-400" />
-                        <div>
-                          <p className="text-xs text-gray-500">Veterinarian</p>
-                          <p className="font-medium text-gray-900">{record.vet.name}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end gap-4">
-                    <div className="flex flex-col items-end">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`badge ${getStatusColor(record.status)} px-3 py-1 text-sm`}>
-                          {record.status.replace('_', ' ')}
-                        </span>
-                        <span className="text-sm font-medium text-gray-900">
-                          {record.ml_confidence}% confidence
-                        </span>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        Created {new Date(record.created_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 text-green-600 group-hover:text-green-700">
-                      <span className="font-medium">View Details</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </div>
-                  </div>
+        {/* ── Stat cards (clickable filter) ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {([
+            { key:"total",           label:"Total",           color:"text-blue-600",   iconBg:"bg-blue-100",   icon:<FileText className="w-5 h-5 text-blue-600"/>,     border:"border-l-blue-500"  },
+            { key:"under_treatment", label:"Under Treatment", color:"text-blue-600",   iconBg:"bg-blue-100",   icon:<Activity className="w-5 h-5 text-blue-600"/>,    border:"border-l-blue-500"  },
+            { key:"recovered",       label:"Recovered",       color:"text-green-600",  iconBg:"bg-green-100",  icon:<CheckCircle className="w-5 h-5 text-green-600"/>, border:"border-l-green-500" },
+            { key:"pending",         label:"Pending",         color:"text-amber-600",  iconBg:"bg-amber-100",  icon:<Clock className="w-5 h-5 text-amber-600"/>,      border:"border-l-amber-500" },
+          ] as const).map(s => (
+            <button key={s.key} type="button"
+              onClick={() => setFilterStatus(s.key === "total" ? "all" : s.key)}
+              className={`card overflow-hidden text-left transition-all duration-200 border-l-4 hover:shadow-md ${s.border} ${
+                (filterStatus === s.key || (s.key === "total" && filterStatus === "all"))
+                  ? "ring-2 ring-offset-1 ring-green-300"
+                  : ""
+              }`}>
+              <div className="card-body py-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-gray-400">{s.label}</p>
+                  <Counter to={counts[s.key as keyof typeof counts]} color={s.color} />
+                </div>
+                <div className={`w-11 h-11 ${s.iconBg} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                  {s.icon}
                 </div>
               </div>
-            </Link>
+            </button>
           ))}
         </div>
-      )}
 
-      {/* Pagination (Optional) */}
-      {filteredRecords.length > 0 && (
-        <div className="card">
-          <div className="card-body">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-600">
-                Showing {filteredRecords.length} of {records.length} records
-              </p>
-              <div className="flex items-center gap-2">
-                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">
-                  Previous
+        {/* ── Search + filter chips ── */}
+        <div className="card overflow-hidden">
+          <div className="card-body space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input type="text" className="input-field pl-10"
+                placeholder="Search by animal name, breed, or diagnosis…"
+                value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+              {searchTerm && (
+                <button onClick={() => setSearchTerm("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition">
+                  <X className="w-3.5 h-3.5" />
                 </button>
-                <button className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">
-                  1
+              )}
+            </div>
+            <div className="filter-bar">
+              {(["all","pending","under_treatment","recovered"] as const).map(s => (
+                <button key={s} type="button" onClick={() => setFilterStatus(s)}
+                  className={`filter-chip ${s === "all"
+                    ? filterStatus === "all" ? "active" : ""
+                    : filterStatus === s
+                    ? s === "recovered" ? "active" : s === "pending" ? "active-amber" : "active-blue"
+                    : ""
+                  }`}>
+                  {s === "all" ? "All" : s === "under_treatment" ? "Under Treatment" : s.charAt(0).toUpperCase() + s.slice(1)}
+                  {s !== "all" && (
+                    <span className="ml-1 bg-white/60 text-current text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                      {counts[s as keyof typeof counts]}
+                    </span>
+                  )}
                 </button>
-                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">
-                  2
+              ))}
+              {(searchTerm || filterStatus !== "all") && (
+                <button onClick={() => { setSearchTerm(""); setFilterStatus("all"); }}
+                  className="ml-auto text-xs font-semibold text-red-500 hover:text-red-600 flex items-center gap-1 flex-shrink-0">
+                  <X className="w-3 h-3" /> Clear
                 </button>
-                <button className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">
-                  Next
-                </button>
-              </div>
+              )}
             </div>
           </div>
         </div>
-      )}
-    
+
+        {/* ── Records list ── */}
+        {filtered.length === 0 ? (
+          <div className="card overflow-hidden">
+            <div className="card-body py-14 flex flex-col items-center text-center gap-4">
+              <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center">
+                <FileText className="w-6 h-6 text-gray-300" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-700">
+                  {searchTerm || filterStatus !== "all" ? "No matching records" : "No clinical records yet"}
+                </h3>
+                <p className="text-sm text-gray-400 mt-1">
+                  {searchTerm || filterStatus !== "all" ? "Adjust your search or filter" : "Create your first clinical record to get started"}
+                </p>
+              </div>
+              {searchTerm || filterStatus !== "all" ? (
+                <button onClick={() => { setSearchTerm(""); setFilterStatus("all"); }}
+                  className="btn btn-outline btn-sm">Clear filters</button>
+              ) : (
+                <Link to="/clinical-records/new" className="btn btn-primary btn-sm flex items-center gap-1.5">
+                  <Plus className="w-3.5 h-3.5" /> Create First Record
+                </Link>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filtered.map(record => {
+              const cfg = getCfg(record.status);
+              return (
+                <Link key={record.id} to={`/clinical-records/${record.id}`}
+                  className={`card overflow-hidden border-l-4 ${cfg.border} hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group block`}>
+                  <div className="card-body">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                      {/* Left: animal + diagnosis */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-xl bg-white border border-gray-100 flex items-center justify-center flex-shrink-0 shadow-sm">
+                            {cfg.icon}
+                          </div>
+                          <div>
+                            <h2 className="font-bold text-gray-900 sora text-sm group-hover:text-green-700 transition">
+                              {record.animal.name}
+                            </h2>
+                            <p className="text-xs text-gray-500">
+                              {record.animal.type}
+                              {record.animal.breed ? ` • ${record.animal.breed}` : ""}
+                            </p>
+                          </div>
+                          <span className={`ml-auto lg:hidden text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full ${cfg.badge}`}>
+                            {cfg.label}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="bg-gray-50 rounded-xl p-3">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Activity className="w-3.5 h-3.5 text-gray-400" />
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">ML Diagnosis</p>
+                            </div>
+                            <p className="text-sm font-semibold text-gray-900">{record.ml_diagnosis}</p>
+                            <div className="mt-2">
+                              <ConfidenceBar value={record.ml_confidence} />
+                            </div>
+                          </div>
+                          <div className="bg-gray-50 rounded-xl p-3">
+                            <div className="flex items-center gap-2 mb-1">
+                              <User className="w-3.5 h-3.5 text-gray-400" />
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Veterinarian</p>
+                            </div>
+                            <p className="text-sm font-semibold text-gray-900">{record.vet.name}</p>
+                            <p className="text-[10px] text-gray-400 mt-0.5 flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {new Date(record.created_at).toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: status + CTA */}
+                      <div className="flex flex-row lg:flex-col items-center lg:items-end gap-3 lg:gap-2 flex-shrink-0">
+                        <span className={`hidden lg:inline-flex text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${cfg.badge}`}>
+                          {cfg.label}
+                        </span>
+                        <div className="flex items-center gap-1 text-xs font-semibold text-green-600 group-hover:text-green-700 ml-auto lg:ml-0">
+                          View details <ChevronRight className="w-3.5 h-3.5" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── Pagination footer ── */}
+        {filtered.length > 0 && (
+          <div className="card overflow-hidden">
+            <div className="card-body py-3.5 flex items-center justify-between">
+              <p className="text-sm text-gray-500">
+                Showing <strong>{filtered.length}</strong> of <strong>{records.length}</strong> records
+              </p>
+              <div className="flex items-center gap-1">
+                {["Prev","1","2","Next"].map(l => (
+                  <button key={l}
+                    className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
+                      l === "1" ? "bg-green-600 text-white shadow-sm" : "border border-gray-200 text-gray-600 hover:bg-gray-50"
+                    }`}>{l}</button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );

@@ -1,9 +1,9 @@
-import { useParams } from "react-router-dom";
+import { useParams, useLocation, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api/axios";
 import Layout from "../components/Layout";
 import ProductCatalog from "../dashboard/agro/ProductCatalog";
-import { Store, MapPin, Phone, Loader2, AlertCircle } from "lucide-react";
+import { Store, MapPin, Phone, Loader2, AlertCircle, ArrowLeft } from "lucide-react";
 import { useToast } from "../context/ToastContext";
 
 type ProviderData = {
@@ -18,6 +18,8 @@ type ProviderData = {
 
 export default function ProviderProducts() {
   const { id } = useParams();
+  const location = useLocation();
+  const isFarmerFlow = location.pathname.startsWith("/farmer/providers/");
   const [provider, setProvider] = useState<ProviderData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,13 +48,15 @@ export default function ProviderProducts() {
   // Fetch provider data
   useEffect(() => {
     const fetchProvider = async () => {
+      if (!id || id === 'undefined' || id === 'null') {
+        setError('Invalid provider');
+        setLoading(false);
+        return;
+      }
       try {
         setLoading(true);
-        const response = await axios.get(`/api/providers/${id}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
+        setError(null);
+        const response = await api.get(`/providers/${id}`);
 
         setProvider(response.data);
 
@@ -75,9 +79,7 @@ export default function ProviderProducts() {
       }
     };
 
-    if (id) {
-      fetchProvider();
-    }
+    fetchProvider();
   }, [id, userLocation, addToast]);
 
   // Haversine formula to calculate distance between two points
@@ -126,6 +128,15 @@ export default function ProviderProducts() {
   return (
     <Layout role={userRole}>
       <div className="space-y-6">
+        {isFarmerFlow && (
+          <Link
+            to="/farmer"
+            className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-medium mb-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Link>
+        )}
         {/* Provider Header */}
         <div className="card overflow-hidden">
           <div className="bg-gradient-to-r from-green-600 to-green-700 p-6">
@@ -183,7 +194,7 @@ export default function ProviderProducts() {
             </div>
           </div>
 
-          <ProductCatalog providerId={Number(id)} />
+          <ProductCatalog providerId={provider.id} />
         </div>
 
         {/* Action Buttons */}
