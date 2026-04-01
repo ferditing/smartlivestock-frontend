@@ -160,3 +160,11 @@ export const deleteProduct = async (id: number) => {
   return res.data;
 };
 
+export const getMyWallet = async () => {
+  const res = await api.get("/agro/wallet");
+  return res.data as {
+    shopWallet: { id: number; balance: number; type: string };
+    pendingEscrowEarnings: number;
+  };
+};
+

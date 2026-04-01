@@ -13,6 +13,7 @@ import {
   Brain,
   ClipboardCheck
 } from "lucide-react";
+import Button from "../../components/Button";
 
 const DEFAULT_ANIMALS = ["Cow", "Goat", "Sheep", "Poultry"];
 
@@ -50,7 +51,7 @@ export default function ReportSymptom() {
           .filter((f) => !f.startsWith("animal_") && !f.startsWith("interact_") && f !== "age" && f !== "body_temperature")
           .map((f) => f.replace(/_/g, " "))
           .filter(Boolean);
-        
+
         if (symptomKeys.length) setAvailableSymptoms(symptomKeys);
         else setAvailableSymptoms(["fever", "cough", "loss of appetite", "diarrhea", "lethargy"]);
       })
@@ -64,11 +65,11 @@ export default function ReportSymptom() {
     if (animal) {
       const animalLower = animal.toLowerCase();
       console.log(`[ReportSymptom] Fetching symptoms for animal: ${animalLower}`);
-      
+
       getSymptomsByAnimal(animalLower)
         .then((res) => {
           console.log(`[ReportSymptom] Got response for ${animalLower}:`, res);
-          
+
           if (res.symptoms && res.symptoms.length > 0) {
             const displaySymptoms = res.symptoms
               .map((s: string) => s.replace(/_/g, " "))
@@ -95,7 +96,7 @@ export default function ReportSymptom() {
     setPrediction(null);
 
     if (!age || !temp) {
-      addToast('warning', 'Missing Information', 'Please fill in age and temperature for better prediction');
+      addToast("warning", "Missing Information", "Please fill in age and temperature for better prediction");
     }
 
     try {
@@ -113,36 +114,36 @@ export default function ReportSymptom() {
         if (symptoms && symptoms.length > 0) {
           const textPayload = {
             animal: animal.toLowerCase(),
-            symptom_text: symptoms.join(', '),
+            symptom_text: symptoms.join(", "),
             age: age ? Number(age) : 0,
             body_temperature: temp ? Number(temp) : 0,
           };
-          console.log('[ReportSymptom] Calling predictFromText with:', textPayload);
+          console.log("[ReportSymptom] Calling predictFromText with:", textPayload);
           ml = await predictFromText(textPayload);
-          console.log('[ReportSymptom] predictFromText response:', ml);
+          console.log("[ReportSymptom] predictFromText response:", ml);
         } else {
-          console.log('[ReportSymptom] Calling predict with:', payload);
+          console.log("[ReportSymptom] Calling predict with:", payload);
           ml = await predict(payload);
-          console.log('[ReportSymptom] predict response:', ml);
+          console.log("[ReportSymptom] predict response:", ml);
         }
         setPrediction(ml);
         // matched_symptoms is nested: {matched_symptoms: Array, confidence: ..., unmatched_phrases: ...}
         canonical = ml?.matched_symptoms?.matched_symptoms || undefined;
-        console.log('[ReportSymptom] Extracted canonical_symptoms array:', canonical);
+        console.log("[ReportSymptom] Extracted canonical_symptoms array:", canonical);
       } catch (mlErr: any) {
-        console.warn('ML predict failed, falling back to local extraction', mlErr?.message || mlErr);
+        console.warn("ML predict failed, falling back to local extraction", mlErr?.message || mlErr);
         if (symptoms && symptoms.length > 0) {
-          canonical = symptoms.map((s) => s.replace(/\s+/g, '_').toLowerCase());
+          canonical = symptoms.map((s) => s.replace(/\s+/g, "_").toLowerCase());
         }
       }
 
-      const symptomText = symptoms.length ? symptoms.join(', ') : '';
-      console.log('[ReportSymptom] Submitting report with canonical_symptoms:', canonical);
+      const symptomText = symptoms.length ? symptoms.join(", ") : "";
+      console.log("[ReportSymptom] Submitting report with canonical_symptoms:", canonical);
       await reportSymptom(symptomText, { animal_id: undefined, animal_type: animal, canonical_symptoms: canonical });
-      addToast('success', 'Report Submitted', 'Symptoms reported successfully');
+      addToast("success", "Report Submitted", "Symptoms reported successfully");
     } catch (err: any) {
       console.error(err);
-      addToast('error', 'Submission Failed', err?.message || 'Failed to submit report');
+      addToast("error", "Submission Failed", err?.message || "Failed to submit report");
     } finally {
       setLoading(false);
     }
@@ -150,7 +151,7 @@ export default function ReportSymptom() {
 
   const submitText = async () => {
     if (!freeText.trim()) {
-      addToast('error', 'Error', 'Please type symptoms to predict');
+      addToast("error", "Error", "Please type symptoms to predict");
       return;
     }
 
@@ -159,27 +160,25 @@ export default function ReportSymptom() {
 
     try {
       // For free text, let the backend auto-detect animal from text
-      // Don't force the dropdown value - backend will extract from symptom text
       const payload = {
-        animal: '',  // Empty animal to force backend to detect from text
+        animal: "",  // Empty animal to force backend to detect from text
         symptom_text: freeText,
         age: age ? Number(age) : 0,
         body_temperature: temp ? Number(temp) : 0,
       };
 
-      console.log('[ReportSymptom FreeText] Calling predictFromText with free text detection:', payload);
+      console.log("[ReportSymptom FreeText] Calling predictFromText with free text detection:", payload);
       let ml: any = null;
       try {
         ml = await predictFromText(payload);
-        console.log('[ReportSymptom FreeText] predictFromText response:', ml);
+        console.log("[ReportSymptom FreeText] predictFromText response:", ml);
         setFreeTextPrediction(ml);
       } catch (mlErr: any) {
-        console.warn('[ReportSymptom FreeText] ML normalize/predict failed, falling back to local extraction', mlErr?.message || mlErr);
+        console.warn("[ReportSymptom FreeText] ML normalize/predict failed, falling back to local extraction", mlErr?.message || mlErr);
       }
 
       // canonical can come from ML or local extraction
-      let canonical: string[] | undefined = undefined;
-      canonical = ml?.matched_symptoms?.matched_symptoms || undefined;
+      let canonical: string[] | undefined = ml?.matched_symptoms?.matched_symptoms || undefined;
 
       if (!canonical) {
         const textNorm = freeText.toLowerCase();
@@ -187,30 +186,37 @@ export default function ReportSymptom() {
         availableSymptoms.forEach((s) => {
           const norm = s.toLowerCase();
           if (textNorm.includes(norm)) {
-            found.push(norm.replace(/\s+/g, '_'));
+            found.push(norm.replace(/\s+/g, "_"));
           }
         });
         canonical = found.length > 0 ? found : undefined;
       }
 
-      console.log('[ReportSymptom FreeText] Extracted symptoms (final):', canonical);
+      console.log("[ReportSymptom FreeText] Extracted symptoms (final):", canonical);
       if (canonical && canonical.length > 0) {
-        addToast('success', 'Symptoms Found', `Identified: ${canonical.join(', ')}`);
+        addToast("success", "Symptoms Found", `Identified: ${canonical.join(", ")}`);
       }
 
       // Use detected animal from ML, NEVER the dropdown value for free text
       const detectedAnimal = ml?.animal || ml?.animal_type;
-      console.log('[ReportSymptom FreeText] Using detected animal:', detectedAnimal);
-      
+      console.log("[ReportSymptom FreeText] Using detected animal:", detectedAnimal);
+
       await reportSymptom(freeText, { animal_id: undefined, animal_type: detectedAnimal, canonical_symptoms: canonical });
-      addToast('success', 'Report Submitted', 'Symptoms extracted and report created successfully');
+      addToast("success", "Report Submitted", "Symptoms extracted and report created successfully");
     } catch (err: any) {
       console.error(err);
-      addToast('error', 'Submission Failed', err?.message || 'Failed to submit report');
+      addToast("error", "Submission Failed", err?.message || "Failed to submit report");
     } finally {
       setTextLoading(false);
     }
   };
+
+  /* FIX: confidence bar width calculation used a redundant self-OR expression:
+     `(x.confidence || x.confidence)` — meaningless, always the same value.
+     Corrected to simply `x.confidence ?? 0` with a safe clamp to [0, 1]
+     so the width never overflows 100%. Extracted as a helper. */
+  const confidencePercent = (val: any): number =>
+    Math.min(100, Math.round((val?.confidence ?? 0) * 100));
 
   return (
     <div className="card">
@@ -241,29 +247,21 @@ export default function ReportSymptom() {
               onChange={(e) => setFreeText(e.target.value)}
               disabled={textLoading}
             />
-            <button
+            <Button
               onClick={submitText}
-              disabled={textLoading}
-              className="btn-outline flex items-center justify-center gap-2 w-full sm:w-auto"
+              variant="outline"
+              loading={textLoading}
+              className="w-full sm:w-auto"
+              icon={<Brain className="w-4 h-4" />}
             >
-              {textLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Analyzing...
-                </>
-              ) : (
-                <>
-                  <Brain className="w-4 h-4" />
-                  Analyze with AI
-                </>
-              )}
-            </button>
+              Analyze with AI
+            </Button>
           </div>
         </div>
 
         <div className="border-t border-gray-200 pt-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Structured Input</h3>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
             {/* Animal Selection */}
             <div className="w-full min-w-0">
@@ -271,9 +269,9 @@ export default function ReportSymptom() {
                 <Activity className="w-4 h-4 flex-shrink-0" />
                 Animal
               </label>
-              <select 
-                className="select-field w-full" 
-                value={animal} 
+              <select
+                className="select-field w-full"
+                value={animal}
                 onChange={(e) => setAnimal(e.target.value)}
               >
                 {animals.map((a) => (
@@ -330,8 +328,8 @@ export default function ReportSymptom() {
                   onClick={() => toggleSymptom(s)}
                   className={`p-3 rounded-lg border transition-all duration-200 text-left ${
                     symptoms.includes(s)
-                      ? 'border-green-500 bg-green-50 text-green-700'
-                      : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                      ? "border-green-500 bg-green-50 text-green-700"
+                      : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -351,23 +349,15 @@ export default function ReportSymptom() {
 
           {/* Submit Button */}
           <div className="mt-8">
-            <button
+            <Button
               onClick={submit}
-              disabled={loading}
-              className="w-full btn-primary flex items-center justify-center gap-2 py-3"
+              variant="primary"
+              loading={loading}
+              className="w-full py-3"
+              icon={<ClipboardCheck className="w-5 h-5" />}
             >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <ClipboardCheck className="w-5 h-5" />
-                  Submit & Get Prediction
-                </>
-              )}
-            </button>
+              Submit &amp; Get Prediction
+            </Button>
           </div>
 
           {/* Free Text Prediction Result */}
@@ -390,18 +380,20 @@ export default function ReportSymptom() {
                     {freeTextPrediction.predicted_disease || freeTextPrediction.predicted_label}
                   </p>
                 </div>
-                
+
                 <div className="p-4 bg-white rounded-lg">
                   <p className="text-sm font-medium text-gray-500">Confidence Level</p>
                   <div className="mt-2">
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-green-600 h-2 rounded-full" 
-                        style={{ width: `${(freeTextPrediction.confidence || freeTextPrediction.confidence) * 100}%` }}
-                      ></div>
+                      {/* FIX: was `(x.confidence || x.confidence)` — a no-op self-OR.
+                          Now uses the safe confidencePercent() helper. */}
+                      <div
+                        className="bg-green-600 h-2 rounded-full"
+                        style={{ width: `${confidencePercent(freeTextPrediction)}%` }}
+                      />
                     </div>
                     <p className="text-lg font-bold text-gray-900 mt-2">
-                      {Math.round((freeTextPrediction.confidence || freeTextPrediction.confidence) * 100)}%
+                      {confidencePercent(freeTextPrediction)}%
                     </p>
                   </div>
                 </div>
@@ -442,18 +434,19 @@ export default function ReportSymptom() {
                   {prediction.predicted_disease || prediction.predicted_label}
                 </p>
               </div>
-              
+
               <div className="p-4 bg-white rounded-lg">
                 <p className="text-sm font-medium text-gray-500">Confidence Level</p>
                 <div className="mt-2">
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-green-600 h-2 rounded-full" 
-                      style={{ width: `${(prediction.confidence || prediction.confidence) * 100}%` }}
-                    ></div>
+                    {/* FIX: same redundant self-OR fixed here too */}
+                    <div
+                      className="bg-green-600 h-2 rounded-full"
+                      style={{ width: `${confidencePercent(prediction)}%` }}
+                    />
                   </div>
                   <p className="text-lg font-bold text-gray-900 mt-2">
-                    {Math.round((prediction.confidence || prediction.confidence) * 100)}%
+                    {confidencePercent(prediction)}%
                   </p>
                 </div>
               </div>

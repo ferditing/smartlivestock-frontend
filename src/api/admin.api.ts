@@ -98,6 +98,15 @@ export const rejectProvider = async (providerId: number, reason?: string) => {
   return res.data;
 };
 
+export const getProviderWallets = async (providerId: number) => {
+  const res = await api.get(`/admin/providers/${providerId}/wallets`);
+  return res.data as {
+    provider_id: number;
+    user_id: number;
+    wallets: { id: number; type: string; balance: number; created_at: string }[];
+  };
+};
+
 // ---- Settings ----
 export const getAdminSettings = async () => {
   const res = await api.get("/admin/settings");
