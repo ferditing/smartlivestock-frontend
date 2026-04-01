@@ -88,7 +88,7 @@ export default function Register() {
             return nk === na || nk.includes(na) || na.includes(nk);
           });
 
-          let chosenCounty = countyMatch || (addrCountyRaw ? addrCountyRaw.replace(/\s*County$/i, '').trim() : undefined);
+          const chosenCounty = countyMatch || (addrCountyRaw ? addrCountyRaw.replace(/\s*County$/i, '').trim() : undefined);
 
           let chosenSub: string | undefined = undefined;
           if (chosenCounty && kenyaData[chosenCounty]) {

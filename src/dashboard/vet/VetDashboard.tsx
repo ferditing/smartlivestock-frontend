@@ -5,7 +5,7 @@ import { fetchVetVerificationRequests, vetVerifyProduct, type VetVerificationPro
 import api from "../../api/axios";
 import { useToast } from "../../context/ToastContext";
 import {
-  Calendar, Activity, Users, Clock, AlertCircle, FileText,
+  Calendar, Activity, Clock, AlertCircle, FileText,
   Stethoscope, Loader2, MapPin, CheckCircle, ShieldCheck, XCircle,
   ChevronRight, Zap,
 } from "lucide-react";

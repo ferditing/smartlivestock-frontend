@@ -11,7 +11,7 @@ import { serverBaseUrl } from "../../api/axios";
 import {
   Package, Loader2, CheckCircle, Clock, XCircle, X,
   Eye, Search, RefreshCcw, CreditCard, ExternalLink,
-  ShoppingBag, AlertCircle,
+  ShoppingBag,
 } from "lucide-react";
 
 /* ── Status config ───────────────────────────────────────────── */
@@ -83,7 +83,6 @@ export default function Orders() {
   const pendingCount   = orders.filter(o => o.status === "pending").length;
   const completedCount = orders.filter(o => o.status === "completed").length;
   const cancelledCount = orders.filter(o => o.status === "cancelled").length;
-  const totalSpend     = orders.filter(o => o.status === "completed").reduce((s,o) => s + Number(o.total), 0);
 
   return (
     <Layout role="farmer">

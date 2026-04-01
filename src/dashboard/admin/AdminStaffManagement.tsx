@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Layout from "../../components/Layout";
 import { Link } from "react-router-dom";
 import api from "../../api/axios";
-import { ArrowLeft, UserPlus, Users, MapPin, Shield, Mail, Phone, ChevronDown, Loader2, Send, CheckCircle2, Crown, UserCog, ClipboardList, RefreshCw, Sparkles, Building2, X } from "lucide-react";
+import { ArrowLeft, UserPlus, Users, MapPin, Shield, Mail, Phone, Loader2, Send, CheckCircle2, Crown, UserCog, ClipboardList, RefreshCw, Sparkles, Building2 } from "lucide-react";
 import { useToast } from "../../context/ToastContext";
 
 type County = { id: number; name: string };

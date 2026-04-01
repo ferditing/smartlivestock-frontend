@@ -16,9 +16,9 @@ import axios from "axios";
 import Layout from "../../components/Layout";
 import { useToast } from "../../context/ToastContext";
 import {
-  ArrowLeft, FileText, User, Activity, Search, Loader2,
-  Calendar, Stethoscope, AlertCircle, CheckCircle,
-  PawPrint, ChevronRight, Microscope, BarChart3, X,
+  ArrowLeft, FileText, User, Search, Loader2,
+  Stethoscope, AlertCircle, CheckCircle,
+  PawPrint, Microscope, BarChart3, X,
   Shield, Sparkles,
 } from "lucide-react";
 

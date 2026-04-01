@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { fetchPendingReports } from "../../api/vet.api";
 import { useToast } from "../../context/ToastContext";
 import {
-  AlertCircle, Clock, User, MapPin, ChevronRight,
-  Loader2, Filter, Search, RefreshCw, X,
+  AlertCircle, Clock, User, ChevronRight,
+  Loader2, Search, RefreshCw, X,
 } from "lucide-react";
 
 function Counter({ to }: { to: number }) {

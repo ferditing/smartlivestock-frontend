@@ -8,7 +8,6 @@ import {
   Calendar,
   Activity,
   MessageSquare,
-  Loader2,
   AlertTriangle,
   Brain,
   ClipboardCheck

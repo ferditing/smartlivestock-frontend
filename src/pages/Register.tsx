@@ -8,7 +8,7 @@ import { useNavigate, Link } from "react-router-dom";
 import api from "../api/axios";
 import rawKenyaData from "../data/kenya_locations_complete3.json";
 import { useToast } from "../context/ToastContext";
-import { User, Mail, Phone, Lock, MapPin, Eye, EyeOff, Loader2, CheckCircle, XCircle, ArrowLeft, PawPrint, Stethoscope, ShoppingBag } from "lucide-react";
+import { User, Lock, MapPin, Eye, EyeOff, Loader2, CheckCircle, XCircle, ArrowLeft, PawPrint, Stethoscope, ShoppingBag } from "lucide-react";
 import { SHARED_STYLES } from "./Landing";
 
 type LocationState = { lat?: number; lng?: number; county?: string; sub_county?: string; ward?: string; locality?: string };

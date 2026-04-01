@@ -220,7 +220,7 @@ export default function AgroDashboard() {
                         <CartesianGrid strokeDasharray="3 3" className="stroke-gray-100" />
                         <XAxis dataKey="name" tick={{ fontSize:11 }} />
                         <YAxis tickFormatter={v => `${(v/1000).toFixed(0)}k`} tick={{ fontSize:11 }} />
-                        <Tooltip formatter={(v: number) => [formatKes(v),"Revenue"]} labelFormatter={l=>`Month: ${l}`} />
+                        <Tooltip formatter={(v: any) => [formatKes(v),"Revenue"]} labelFormatter={l=>`Month: ${l}`} />
                         <Area type="monotone" dataKey="revenue" stroke="#22c55e" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
                       </AreaChart>
                     </ResponsiveContainer>

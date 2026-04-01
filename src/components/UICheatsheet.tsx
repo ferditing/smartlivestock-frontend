@@ -13,9 +13,9 @@
 import Button, { QuickActionTile } from "../components/Button";
 import Tabs, { Tab, TabPanel, FilterBar, FilterChip } from "../components/Tabs";
 import {
-  PawPrint, Calendar, Activity, ShoppingCart, AlertTriangle,
-  Zap, Plus, Save, Trash2, Bell, ArrowRight, Loader2,
-  Stethoscope, Store, Shield, BarChart2,
+  PawPrint, Calendar, Activity, ShoppingCart, 
+  Zap, Plus, Save, Trash2, Bell, ArrowRight,
+  Store, Shield, BarChart2,
 } from "lucide-react";
 import { useState } from "react";
 

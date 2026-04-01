@@ -10,7 +10,7 @@
  *  • All sections have images, consistent green-primary theme
  */
 
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Menu, X, PawPrint, CloudRain, MapPin, ShoppingBag, Stethoscope,
@@ -19,7 +19,6 @@ import {
   BarChart, PieChart, LineChart, Activity, FileText, ArrowUp,
   Mail, Phone, MessageSquare, Send, ExternalLink,
 } from "lucide-react";
-import kenyaLocations from "../data/kenya_locations_complete3.json";
 import { KENYA_COUNTY_COORDINATES, WMO_WEATHER_LABELS } from "../data/kenya_county_coordinates";
 
 type HeroAnimation = "fade" | "slideRight" | "slideLeft" | "zoom";

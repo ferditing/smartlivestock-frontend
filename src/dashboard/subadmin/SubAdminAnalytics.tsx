@@ -31,7 +31,7 @@ export default function SubAdminAnalytics() {
     getSubadminAnalytics().then(r => setData(r.analytics ?? r)).catch(e => setError(e?.response?.data?.error || "Failed to load analytics")).finally(() => setLoading(false));
   }, []);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   useEffect(() => {
     setCasesLoading(true);
     getSubadminSymptomReports({ page: casesPage, limit: 20, status: casesStatus !== "all" ? casesStatus : undefined })

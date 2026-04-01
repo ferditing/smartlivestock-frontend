@@ -105,7 +105,6 @@ export default function FarmerDashboard() {
               title={s.title}
               value={s.value}
               trend={s.trend}
-              trendValue={s.trendValue}
               trendLabel={s.trendLabel}
               icon={s.icon}
               accent={s.accent}
