@@ -8,153 +8,71 @@
  * • Time-slot grid (30-min increments 09:00–17:00)
  * • Animated step progress bar with connecting lines
  * • Review summary card with per-field confirm icons
- * • All original API calls/logic preserved unchanged
+ *
+ * FIXES applied in this version:
+ *  1. On successful booking → reset wizard back to Step 0 (no redirect away).
+ *  2. Per-step validation before advancing:
+ *     • Step 0 (Type)     — always valid (type is pre-selected by default).
+ *     • Step 1 (Provider) — blocks if geo is still loading; provider itself
+ *                           is optional (null = auto-assign) so always valid.
+ *     • Step 2 (Schedule) — blocks until BOTH a date AND a time are chosen;
+ *                           highlights the missing card with a red ring.
+ *     • Step 3 (Review)   — submit validates scheduledAt before posting.
+ *  3. Inline stepError banner shown below step content, auto-cleared when
+ *     the user corrects the issue.
  */
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "../../api/axios";
 import Layout from "../../components/Layout";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useToast } from "../../context/ToastContext";
 import {
   Calendar, Clock, User, FileText, Loader2, MapPin,
   CheckCircle, ChevronRight, ChevronLeft, Stethoscope,
-  Brain, Star, Navigation, AlertCircle, Check, Sparkles,
+  Brain, AlertCircle, Check, PartyPopper,
 } from "lucide-react";
 
-/* ─── Types ────────────────────────────────────────────────────── */
-type Provider = {
-  id: number; name: string; type?: string;
-  distance?: number; specialty?: string; rating?: number;
+/* ── Types ── */
+type Step   = 0 | 1 | 2 | 3;
+type Reason = "checkup" | "prediction";
+
+type Provider = { id: number; name: string; type?: string; distance?: number };
+type Report = {
+  id: number;
+  animal_type?: string;
+  symptom_text?: string;
+  status?: string;
+  created_at?: string;
 };
-type Report   = { id: number; title?: string; animal_name?: string };
-type Reason   = "checkup" | "prediction";
-type Step     = 0 | 1 | 2 | 3;
 
-/* ─── Calendar helpers ─────────────────────────────────────────── */
-const MONTH_NAMES = [
-  "January","February","March","April","May","June",
-  "July","August","September","October","November","December",
-];
-const DAY_NAMES = ["Su","Mo","Tu","We","Th","Fr","Sa"];
+/* ══════════════════════ SUB-COMPONENTS ══════════════════════ */
 
-function buildDays(year: number, month: number) {
-  const firstDay   = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  return [
-    ...Array(firstDay).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
-  ];
-}
-
-/* ─── Time slots 09:00 – 17:00 ─────────────────────────────────── */
-const TIME_SLOTS: string[] = [];
-for (let h = 9; h <= 17; h++) {
-  for (const m of [0, 30]) {
-    if (h === 17 && m > 0) break;
-    TIME_SLOTS.push(`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`);
-  }
-}
-
-/* ════════════════════════════════════
-   INLINE CALENDAR
-════════════════════════════════════ */
-function InlineCalendar({ value, onChange }: { value: Date | null; onChange: (d: Date) => void }) {
-  const today = new Date();
-  const [view, setView] = useState({ year: today.getFullYear(), month: today.getMonth() });
-  const days = buildDays(view.year, view.month);
-
-  const isToday    = (d: number) => d === today.getDate() && view.month === today.getMonth() && view.year === today.getFullYear();
-  const isPast     = (d: number) => new Date(view.year, view.month, d) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const isSelected = (d: number) => value && value.getDate() === d && value.getMonth() === view.month && value.getFullYear() === view.year;
-
-  const prevMonth = () => setView(v => v.month === 0 ? { year: v.year - 1, month: 11 } : { ...v, month: v.month - 1 });
-  const nextMonth = () => setView(v => v.month === 11 ? { year: v.year + 1, month: 0 } : { ...v, month: v.month + 1 });
-
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden" style={{ boxShadow:"var(--shadow-sm)" }}>
-      {/* header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        <button type="button" onClick={prevMonth}
-          className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-gray-100 transition text-gray-500">
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <span className="text-sm font-bold text-gray-900 sora">{MONTH_NAMES[view.month]} {view.year}</span>
-        <button type="button" onClick={nextMonth}
-          className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-gray-100 transition text-gray-500">
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
-
-      <div className="p-4">
-        {/* day names */}
-        <div className="grid grid-cols-7 mb-2">
-          {DAY_NAMES.map(d => (
-            <div key={d} className="text-center text-[10px] font-bold text-gray-400 uppercase py-1">{d}</div>
-          ))}
-        </div>
-        {/* day cells */}
-        <div className="grid grid-cols-7 gap-1">
-          {days.map((d, i) => {
-            if (d === null) return <div key={"b" + i} />;
-            const past  = isPast(d);
-            const sel   = isSelected(d);
-            const tod   = isToday(d);
-            return (
-              <button key={d} type="button" disabled={past}
-                onClick={() => onChange(new Date(view.year, view.month, d))}
-                className={[
-                  "relative w-full aspect-square flex items-center justify-center text-sm font-semibold rounded-xl transition-all duration-150",
-                  past  ? "text-gray-300 cursor-not-allowed"                                      : "cursor-pointer",
-                  sel   ? "bg-green-600 text-white shadow-md hover:bg-green-700"                  : "",
-                  !sel && !past ? "hover:bg-green-50 hover:text-green-700"                        : "",
-                  tod && !sel   ? "ring-2 ring-green-400 ring-offset-1 text-green-700 font-bold"  : "",
-                ].filter(Boolean).join(" ")}>
-                {d}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ════════════════════════════════════
-   STEP BAR
-════════════════════════════════════ */
 const STEP_LABELS = ["Type", "Provider", "Schedule", "Review"];
 
 function StepBar({ current }: { current: Step }) {
   return (
-    <div className="flex items-center mb-8">
+    <div className="flex items-center gap-0">
       {STEP_LABELS.map((label, i) => {
         const done   = i < current;
         const active = i === current;
         return (
           <React.Fragment key={label}>
-            <div className="flex flex-col items-center gap-1.5 z-10 relative">
-              <div className={[
-                "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300",
-                done   ? "bg-green-600 text-white shadow-md"                                   : "",
-                active ? "bg-green-600 text-white scale-110"                                   : "",
-                !done && !active ? "bg-gray-100 text-gray-400"                                 : "",
-              ].filter(Boolean).join(" ")}
-                style={active ? { boxShadow:"0 0 0 4px rgba(22,163,74,.2), 0 4px 12px rgba(22,163,74,.3)" } : undefined}>
+            <div className="flex flex-col items-center gap-1 z-10">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300
+                  ${done   ? "bg-green-600 text-white"
+                  : active ? "bg-green-600 text-white ring-4 ring-green-100"
+                  :          "bg-gray-100 text-gray-400"}`}
+              >
                 {done ? <Check className="w-4 h-4" /> : i + 1}
               </div>
-              <span className={[
-                "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
-                active ? "text-green-700" : done ? "text-green-600" : "text-gray-400",
-              ].join(" ")}>{label}</span>
+              <span className={`text-xs font-medium ${active || done ? "text-green-700" : "text-gray-400"}`}>
+                {label}
+              </span>
             </div>
-
             {i < STEP_LABELS.length - 1 && (
-              <div className="flex-1 h-0.5 mx-1 -mt-5 relative">
-                <div className="absolute inset-0 bg-gray-200 rounded-full" />
-                <div className="absolute inset-0 bg-green-500 rounded-full transition-all duration-500"
-                  style={{ width: i < current ? "100%" : "0%" }} />
-              </div>
+              <div className={`flex-1 h-0.5 mx-1 mb-5 transition-all duration-300 ${i < current ? "bg-green-500" : "bg-gray-200"}`} />
             )}
           </React.Fragment>
         );
@@ -163,160 +81,194 @@ function StepBar({ current }: { current: Step }) {
   );
 }
 
-/* ════════════════════════════════════
-   TYPE CARD
-════════════════════════════════════ */
-function TypeCard({ selected, onClick, icon, title, subtitle, accent, badge }: {
-  selected: boolean; onClick: () => void; icon: React.ReactNode;
-  title: string; subtitle: string; accent: "green" | "blue"; badge?: string;
+function TypeCard({
+  selected, onClick, accent, icon, title, subtitle, badge,
+}: {
+  selected: boolean; onClick: () => void; accent: "green" | "blue";
+  icon: React.ReactNode; title: string; subtitle: string; badge?: string;
 }) {
-  const s = accent === "green"
-    ? { ring:"border-green-500 from-green-50 to-emerald-50", grad:"from-green-500 to-green-700", title:"text-green-800", dot:"bg-green-600" }
-    : { ring:"border-blue-500 from-blue-50 to-indigo-50", grad:"from-blue-500 to-indigo-600", title:"text-blue-800", dot:"bg-blue-600" };
-
+  const ring   = accent === "green" ? "border-green-500 bg-green-50" : "border-blue-500 bg-blue-50";
+  const iconBg = accent === "green"
+    ? "bg-gradient-to-br from-green-500 to-emerald-600"
+    : "bg-gradient-to-br from-blue-500 to-indigo-600";
   return (
     <button type="button" onClick={onClick}
-      className={[
-        "relative w-full p-5 rounded-2xl border-2 text-left transition-all duration-200",
-        selected ? `${s.ring} bg-gradient-to-br shadow-md` : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm",
-      ].join(" ")}>
-      {badge && (
-        <span className="absolute top-3 right-3 text-[9px] font-black uppercase tracking-widest bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">
-          {badge}
-        </span>
-      )}
-      <div className="flex items-start gap-4">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${s.grad}`}
-          style={{ boxShadow:"0 2px 8px rgba(0,0,0,.15)" }}>
-          {icon}
+      className={`w-full text-left rounded-2xl border-2 p-4 flex items-start gap-4 transition-all duration-200
+        ${selected ? ring : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm"}`}>
+      <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg}`}>{icon}</div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-gray-900 sora text-sm">{title}</span>
+          {badge && <span className="badge badge-info text-[10px]">{badge}</span>}
         </div>
-        <div className="flex-1 min-w-0">
-          <h4 className={`font-bold sora text-sm ${selected ? s.title : "text-gray-900"}`}>{title}</h4>
-          <p className="text-xs text-gray-500 mt-1 leading-relaxed">{subtitle}</p>
-        </div>
-        {selected && (
-          <div className={`w-6 h-6 rounded-full ${s.dot} flex items-center justify-center flex-shrink-0 flex-shrink-0 mt-0.5`}>
-            <Check className="w-3.5 h-3.5 text-white" />
-          </div>
-        )}
+        <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{subtitle}</p>
       </div>
+      {selected && (
+        <CheckCircle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${accent === "green" ? "text-green-600" : "text-blue-600"}`} />
+      )}
     </button>
   );
 }
 
-/* ════════════════════════════════════
-   PROVIDER CARD
-════════════════════════════════════ */
 function ProviderCard({ provider, selected, onClick }: {
   provider: Provider | null; selected: boolean; onClick: () => void;
 }) {
-  const base = "w-full p-4 rounded-2xl border-2 text-left transition-all duration-200";
-  const sel  = "border-green-500 bg-green-50 shadow-md";
-  const unsel = "border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm";
-
   if (!provider) {
     return (
       <button type="button" onClick={onClick}
-        className={`${base} ${selected ? sel : unsel} flex items-center gap-4`}>
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center flex-shrink-0">
-          <User className="w-5 h-5 text-white" />
+        className={`w-full text-left rounded-2xl border-2 p-4 flex items-center gap-3 transition-all duration-200
+          ${selected ? "border-green-500 bg-green-50" : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm"}`}>
+        <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
+          <User className="w-5 h-5 text-gray-500" />
         </div>
         <div className="flex-1">
-          <p className="font-bold text-sm text-gray-900 sora">Any Available Provider</p>
-          <p className="text-xs text-gray-500 mt-0.5">First matching vet or agrovet will be assigned</p>
+          <p className="font-semibold text-gray-700 text-sm">No preference</p>
+          <p className="text-xs text-gray-400">We'll assign the nearest available provider</p>
         </div>
-        {selected && <div className="w-6 h-6 rounded-full bg-green-600 flex items-center justify-center flex-shrink-0"><Check className="w-3.5 h-3.5 text-white" /></div>}
+        {selected && <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />}
       </button>
     );
   }
-
-  const initials = provider.name.split(" ").map(w => w[0]).slice(0,2).join("").toUpperCase();
-  const distKm   = provider.distance ? (provider.distance / 1000).toFixed(1) : null;
-
   return (
     <button type="button" onClick={onClick}
-      className={`${base} ${selected ? sel : unsel}`}>
-      <div className="flex items-start gap-3">
-        <div className="relative flex-shrink-0">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center text-white text-sm font-bold sora">
-            {initials}
-          </div>
-          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="font-bold text-sm text-gray-900 sora">{provider.name}</span>
-            {provider.type && (
-              <span className="text-[9px] font-bold uppercase tracking-widest bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">
-                {provider.type}
-              </span>
-            )}
-          </div>
-          {provider.specialty && <p className="text-xs text-gray-500 mt-0.5">{provider.specialty}</p>}
-          <div className="flex items-center gap-3 mt-1">
-            {distKm && (
-              <span className="flex items-center gap-1 text-xs text-gray-500">
-                <Navigation className="w-3 h-3" /> {distKm} km
-              </span>
-            )}
-            {provider.rating && (
-              <span className="flex items-center gap-1 text-xs text-amber-600 font-bold">
-                <Star className="w-3 h-3 fill-amber-400 stroke-amber-400" /> {provider.rating.toFixed(1)}
-              </span>
-            )}
-          </div>
-        </div>
-        {selected && (
-          <div className="w-6 h-6 rounded-full bg-green-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <Check className="w-3.5 h-3.5 text-white" />
-          </div>
-        )}
+      className={`w-full text-left rounded-2xl border-2 p-4 flex items-center gap-3 transition-all duration-200
+        ${selected ? "border-green-500 bg-green-50" : "border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm"}`}>
+      <div className="w-10 h-10 rounded-xl card-icon-green flex items-center justify-center flex-shrink-0 relative">
+        <User className="w-5 h-5 text-white" />
+        <span className="status-dot status-online absolute -top-0.5 -right-0.5" />
       </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-gray-900 text-sm truncate">{provider.name}</p>
+        <div className="flex items-center gap-2 mt-0.5">
+          {provider.type && <span className="text-xs text-gray-500">{provider.type}</span>}
+          {provider.distance != null && (
+            <span className="text-xs text-gray-400 flex items-center gap-0.5">
+              <MapPin className="w-3 h-3" /> {provider.distance.toFixed(1)} km
+            </span>
+          )}
+        </div>
+      </div>
+      {selected && <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />}
     </button>
   );
 }
 
-/* ════════════════════════════════════
-   SKELETON
-════════════════════════════════════ */
 function ProviderSkeleton() {
   return (
-    <div className="animate-pulse rounded-2xl border border-gray-100 p-4 bg-white flex items-start gap-3">
-      <div className="w-11 h-11 bg-gray-100 rounded-xl flex-shrink-0" />
-      <div className="flex-1 space-y-2 pt-1">
-        <div className="h-3.5 bg-gray-100 rounded w-2/3" />
-        <div className="h-3 bg-gray-100 rounded w-1/2" />
-        <div className="h-3 bg-gray-100 rounded w-1/3" />
+    <div className="rounded-2xl border border-gray-100 p-4 flex items-center gap-3">
+      <div className="skeleton w-10 h-10 rounded-xl" />
+      <div className="flex-1 space-y-2">
+        <div className="skeleton-text w-1/2" />
+        <div className="skeleton-text w-1/3" />
       </div>
     </div>
   );
 }
 
-/* ════════════════════════════════════
-   MAIN COMPONENT
-════════════════════════════════════ */
+const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+function InlineCalendar({ value, onChange }: { value: Date | null; onChange: (d: Date) => void }) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const [viewYear,  setViewYear]  = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
+  const firstDay    = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
+    else setViewMonth(m => m - 1);
+  };
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
+    else setViewMonth(m => m + 1);
+  };
+  const monthLabel = new Date(viewYear, viewMonth).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+  return (
+    <div className="select-none">
+      <div className="flex items-center justify-between mb-4">
+        <button type="button" onClick={prevMonth} className="btn btn-ghost btn-icon-sm"><ChevronLeft className="w-4 h-4" /></button>
+        <span className="text-sm font-bold text-gray-800 sora">{monthLabel}</span>
+        <button type="button" onClick={nextMonth} className="btn btn-ghost btn-icon-sm"><ChevronRight className="w-4 h-4" /></button>
+      </div>
+      <div className="grid grid-cols-7 mb-1">
+        {DAYS.map(d => <div key={d} className="text-center text-xs font-semibold text-gray-400 py-1">{d}</div>)}
+      </div>
+      <div className="grid grid-cols-7 gap-y-1">
+        {Array.from({ length: firstDay }).map((_, i) => <div key={`e-${i}`} />)}
+        {Array.from({ length: daysInMonth }).map((_, i) => {
+          const day  = i + 1;
+          const date = new Date(viewYear, viewMonth, day);
+          const past = date < today;
+          const sel  = value
+            ? date.getFullYear() === value.getFullYear() &&
+              date.getMonth()    === value.getMonth()    &&
+              date.getDate()     === value.getDate()
+            : false;
+          const isToday = date.getTime() === today.getTime();
+          return (
+            <button key={day} type="button" disabled={past} onClick={() => onChange(date)}
+              className={`mx-auto w-9 h-9 rounded-xl text-xs font-medium transition-all duration-150 flex items-center justify-center
+                ${sel     ? "bg-green-600 text-white font-bold shadow-md"
+                : isToday ? "border-2 border-green-400 text-green-700 font-bold"
+                : past    ? "text-gray-300 cursor-not-allowed"
+                :           "text-gray-700 hover:bg-green-50 hover:text-green-700"}`}>
+              {day}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════ MAIN COMPONENT ══════════════════════ */
+
 export default function BookAppointment() {
-  const [step, setStep]               = useState<Step>(0);
-  const [reason, setReason]           = useState<Reason>("checkup");
-  const [providerId, setProviderId]   = useState<number | null>(null);
-  const [reportId, setReportId]       = useState<number | "">("");
+  const [step,         setStep]         = useState<Step>(0);
+  const [reason,       setReason]       = useState<Reason>("checkup");
+  const [providerId,   setProviderId]   = useState<number | null>(null);
+  const [reportId,     setReportId]     = useState<number | "">("");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>("");
-  const [loading, setLoading]         = useState(false);
-  const [geoLoading, setGeoLoading]   = useState(false);
-  const [providers, setProviders]     = useState<Provider[]>([]);
-  const [reports, setReports]         = useState<Report[]>([]);
+  const [loading,      setLoading]      = useState(false);
+  const [geoLoading,   setGeoLoading]   = useState(false);
+  const [providers,    setProviders]    = useState<Provider[]>([]);
+  const [reports,      setReports]      = useState<Report[]>([]);
   const [farmerLocation, setFarmerLocation] = useState<{ lat: number; lng: number } | null>(null);
 
+  /* ── NEW: per-step inline validation error ── */
+  const [stepError,   setStepError]   = useState<string>("");
+
+  /* ── NEW: controls the post-booking success screen ── */
+  const [bookingDone, setBookingDone] = useState(false);
+
+  /* FIX: removed useNavigate — success no longer redirects away from this page */
   const [searchParams] = useSearchParams();
-  const navigate       = useNavigate();
   const { addToast }   = useToast();
+
+  /* ── Reset the entire wizard back to Step 0 ── */
+  const resetWizard = () => {
+    setStep(0);
+    setReason("checkup");
+    setProviderId(null);
+    setReportId("");
+    setSelectedDate(null);
+    setSelectedTime("");
+    setStepError("");
+    setBookingDone(false);
+  };
 
   /* ── Data loading ── */
   useEffect(() => {
-    axios.get("/reports/my").then(r => setReports(r.data)).catch(() => {});
-    const pParam = searchParams.get("provider");
-    if (pParam) { const n = Number(pParam); if (!isNaN(n)) setProviderId(n); }
+    axios.get("/reports/my")
+      .then((r) => setReports(r.data))
+      .catch(() => addToast("error", "Reports", "Failed to load your reports"));
+
+    const providerParam = searchParams.get("provider");
+    if (providerParam) {
+      const n = Number(providerParam);
+      if (!Number.isNaN(n)) setProviderId(n);
+    }
   }, [searchParams]);
 
   useEffect(() => {
@@ -347,62 +299,197 @@ export default function BookAppointment() {
     return d.toISOString();
   })() : "";
 
+  /* ── Time slots 09:00–16:30 in 30-min steps ── */
+  const TIME_SLOTS: string[] = [];
+  for (let h = 9; h < 17; h++) {
+    TIME_SLOTS.push(`${String(h).padStart(2, "0")}:00`);
+    TIME_SLOTS.push(`${String(h).padStart(2, "0")}:30`);
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     PER-STEP VALIDATION
+     Returns "" when the current step is complete and safe to advance.
+     Returns a human-readable error string when something is missing.
+  ══════════════════════════════════════════════════════════════ */
+  const validateStep = (s: Step): string => {
+    switch (s) {
+      case 0:
+        // Visit type is always pre-selected — nothing can be skipped.
+        return "";
+
+      case 1:
+        // Block advancing while the provider list is still loading.
+        // Provider selection itself is optional (null = auto-assign).
+        if (geoLoading)
+          return "Please wait — we're still finding nearby providers. Try again in a moment.";
+        return "";
+
+      case 2:
+        // Both date and time must be chosen before the Review step.
+        if (!selectedDate && !selectedTime)
+          return "Please select a date on the calendar and choose a time slot before continuing.";
+        if (!selectedDate)
+          return "Please pick a date from the calendar before continuing.";
+        if (!selectedTime)
+          return "Please choose a time slot before continuing.";
+        return "";
+
+      default:
+        return "";
+    }
+  };
+
   /* ── Navigation ── */
-  const canNext = step !== 2 || (!!selectedDate && !!selectedTime);
-  const next = () => { if (step < 3) setStep(s => (s + 1) as Step); };
-  const prev = () => { if (step > 0) setStep(s => (s - 1) as Step); };
+  const next = () => {
+    const error = validateStep(step);
+    if (error) {
+      // Show inline error and stop; do NOT advance to the next step.
+      setStepError(error);
+      return;
+    }
+    setStepError("");
+    if (step < 3) setStep(s => (s + 1) as Step);
+  };
+
+  const prev = () => {
+    setStepError("");
+    if (step > 0) setStep(s => (s - 1) as Step);
+  };
+
+  // Auto-clear the step error as soon as the user fixes the relevant fields.
+  useEffect(() => { setStepError(""); }, [reason, providerId, selectedDate, selectedTime, geoLoading]);
 
   /* ── Submit ── */
   const handleSubmit = async () => {
-    if (!scheduledAt) { addToast("error", "Validation", "Please select a date and time"); return; }
+    if (!scheduledAt) {
+      const msg = "Please select a date and time before confirming.";
+      setStepError(msg);
+      addToast("error", "Validation", msg);
+      return;
+    }
     setLoading(true);
+    setStepError("");
 
     const doSubmit = async (loc: { lat: number; lng: number } | null) => {
       try {
-        const payload: Record<string, any> = {
-          provider_id: providerId ?? null,
+        const payload: Record<string, unknown> = {
+          provider_id:  providerId ?? null,
           scheduled_at: scheduledAt,
           reason,
         };
         if (reportId) payload.report_id = reportId;
         if (loc) { payload.farmer_lat = loc.lat; payload.farmer_lng = loc.lng; }
+
         await axios.post("/appointments", payload);
         addToast("success", "Booked!", "Your appointment has been confirmed.");
-        navigate("/farmer/appointments");
-      } catch (err: any) {
-        addToast("error", "Booking Failed", err?.response?.data?.error || "Failed to book appointment");
-      } finally { setLoading(false); }
+
+        /* ── FIX: was navigate("/farmer/appointments") which sent the user to
+           a different page. Now we flip bookingDone to true, which swaps the
+           wizard for an in-page success screen. The user can reset from there. ── */
+        setBookingDone(true);
+
+      } catch (err: unknown) {
+        const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+        const errMsg  = message || "Failed to book appointment";
+        /* Show the API error both inline (stepError) and as a toast. */
+        setStepError(errMsg);
+        addToast("error", "Booking Failed", errMsg);
+      } finally {
+        setLoading(false);
+      }
     };
 
     if (navigator.geolocation && !farmerLocation) {
       navigator.geolocation.getCurrentPosition(
         pos => doSubmit({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        ()  => doSubmit(null)
+        ()   => doSubmit(null)
       );
     } else {
       await doSubmit(farmerLocation);
     }
   };
 
-  /* ── Display values for review ── */
+  /* ── Display helpers ── */
   const selectedProvider = providers.find(p => p.id === providerId);
   const selectedReport   = reports.find(r => r.id === reportId);
   const displayDate      = selectedDate
-    ? selectedDate.toLocaleDateString("en-GB", { weekday:"long", day:"numeric", month:"long", year:"numeric" })
+    ? selectedDate.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
     : "—";
 
-  /* ══════════════════════ RENDER ══════════════════════ */
+  /* ══════════════════════════════════════════════════════════════
+     SUCCESS SCREEN
+     Replaces the wizard after a successful booking.
+     No redirect — the user stays on this page.
+     "Book Another Appointment" calls resetWizard() → Step 0.
+  ══════════════════════════════════════════════════════════════ */
+  if (bookingDone) {
+    return (
+      <Layout role="farmer">
+        <div className="max-w-2xl mx-auto space-y-6 animate-fadeInUp">
+          <div>
+            <h1 className="page-title">Book Appointment</h1>
+            <p className="page-sub">Schedule a veterinary visit in a few simple steps</p>
+          </div>
+
+          <div className="card overflow-hidden animate-fadeIn">
+            <div className="card-body py-12 flex flex-col items-center text-center gap-6">
+
+              {/* Success icon */}
+              <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircle className="w-10 h-10 text-green-600" />
+              </div>
+
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold text-gray-900 sora">Appointment Booked!</h2>
+                <p className="text-gray-500 text-sm max-w-sm">
+                  Your appointment has been confirmed. You'll receive a notification once the
+                  provider accepts.
+                </p>
+              </div>
+
+              {/* Compact booking summary */}
+              <div className="w-full max-w-sm bg-gray-50 rounded-2xl divide-y divide-gray-100 text-left">
+                {[
+                  { icon: <Stethoscope className="w-4 h-4 text-green-600" />, label: "Visit Type",
+                    value: reason === "checkup" ? "General Checkup" : "AI Prediction Follow-up" },
+                  { icon: <User className="w-4 h-4 text-green-600" />, label: "Provider",
+                    value: selectedProvider ? selectedProvider.name : "Auto-assigned" },
+                  { icon: <Calendar className="w-4 h-4 text-green-600" />, label: "Date",  value: displayDate },
+                  { icon: <Clock className="w-4 h-4 text-green-600" />,    label: "Time",  value: selectedTime },
+                ].map(({ icon, label, value }) => (
+                  <div key={label} className="flex items-center gap-3 px-5 py-3">
+                    <div className="flex-shrink-0">{icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">{label}</p>
+                      <p className="text-sm font-semibold text-gray-900 truncate">{value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Reset → Step 0 */}
+              <button type="button" onClick={resetWizard}
+                className="btn btn-primary flex items-center gap-2">
+                <PartyPopper className="w-4 h-4" />
+                Book Another Appointment
+              </button>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  /* ══════════════════════ WIZARD ══════════════════════ */
   return (
     <Layout role="farmer">
       <div className="max-w-2xl mx-auto space-y-6 animate-fadeInUp">
 
-        {/* header */}
         <div>
           <h1 className="page-title">Book Appointment</h1>
           <p className="page-sub">Schedule a veterinary visit in a few simple steps</p>
         </div>
 
-        {/* step bar */}
         <StepBar current={step} />
 
         {/* ── STEP 0: Type ── */}
@@ -447,7 +534,8 @@ export default function BookAppointment() {
                     <option value="">No report selected</option>
                     {reports.map(r => (
                       <option key={r.id} value={r.id}>
-                        {r.title || `Report #${r.id}`}{r.animal_name && ` — ${r.animal_name}`}
+                        {r.animal_type ? `${r.animal_type} Report` : `Report #${r.id}`}
+                        {r.created_at && ` (${new Date(r.created_at).toLocaleDateString()})`}
                       </option>
                     ))}
                   </select>
@@ -469,9 +557,7 @@ export default function BookAppointment() {
                 </div>
               </div>
             </div>
-
             <div className="card-body space-y-3">
-              {/* Geo status */}
               {geoLoading ? (
                 <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
                   <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
@@ -491,9 +577,8 @@ export default function BookAppointment() {
                 </div>
               )}
 
-              {/* Provider list */}
               {geoLoading ? (
-                <div className="space-y-2.5">{[1,2,3].map(i => <ProviderSkeleton key={i} />)}</div>
+                <div className="space-y-2.5">{[1, 2, 3].map(i => <ProviderSkeleton key={i} />)}</div>
               ) : (
                 <div className="space-y-2.5">
                   <ProviderCard provider={null} selected={providerId === null} onClick={() => setProviderId(null)} />
@@ -517,18 +602,18 @@ export default function BookAppointment() {
         {/* ── STEP 2: Schedule ── */}
         {step === 2 && (
           <div className="space-y-5 animate-fadeIn">
-            {/* Date */}
-            <div className="card overflow-hidden">
+
+            {/* Date card — red ring if still missing after a failed Continue attempt */}
+            <div className={`card overflow-hidden transition-all ${!selectedDate && stepError ? "ring-2 ring-red-400" : ""}`}>
               <div className="card-header">
                 <div className="card-icon-header">
                   <div className="card-icon-wrap card-icon-green"><Calendar className="w-5 h-5 text-white" /></div>
                   <div>
                     <h2 className="font-bold text-gray-900 sora">Select Date</h2>
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className={`text-xs mt-0.5 transition-colors ${!selectedDate && stepError ? "text-red-500 font-medium" : "text-gray-400"}`}>
                       {selectedDate
-                        ? selectedDate.toLocaleDateString("en-GB", { weekday:"long", day:"numeric", month:"long" })
-                        : "Pick your preferred date"
-                      }
+                        ? selectedDate.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })
+                        : "Pick your preferred date"}
                     </p>
                   </div>
                 </div>
@@ -538,79 +623,51 @@ export default function BookAppointment() {
               </div>
             </div>
 
-            {/* Time slots */}
-            {selectedDate && (
-              <div className="card overflow-hidden animate-fadeIn">
-                <div className="card-header">
-                  <div className="card-icon-header">
-                    <div className="card-icon-wrap card-icon-blue"><Clock className="w-5 h-5 text-white" /></div>
-                    <div>
-                      <h2 className="font-bold text-gray-900 sora">Select Time</h2>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {selectedTime ? `Appointment at ${selectedTime}` : "Choose an available slot"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="card-body">
-                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                    {TIME_SLOTS.map(slot => (
-                      <button key={slot} type="button" onClick={() => setSelectedTime(slot)}
-                        className={[
-                          "py-2 text-xs font-bold rounded-xl border transition-all duration-150",
-                          selectedTime === slot
-                            ? "bg-green-600 text-white border-green-600 shadow-md"
-                            : "border-gray-100 text-gray-700 hover:border-green-300 hover:bg-green-50 hover:text-green-700",
-                        ].join(" ")}>
-                        {slot}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-xs text-gray-400 text-center mt-4">
-                    Available: 09:00 – 17:00 · Mon – Sat
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── STEP 3: Review ── */}
-        {step === 3 && (
-          <div className="space-y-5 animate-fadeIn">
-            <div className="card overflow-hidden">
+            {/* Time card — red ring if still missing after a failed Continue attempt */}
+            <div className={`card overflow-hidden transition-all ${!selectedTime && stepError ? "ring-2 ring-red-400" : ""}`}>
               <div className="card-header">
                 <div className="card-icon-header">
-                  <div className="card-icon-wrap card-icon-green"><Sparkles className="w-5 h-5 text-white" /></div>
+                  <div className="card-icon-wrap card-icon-blue"><Clock className="w-5 h-5 text-white" /></div>
                   <div>
-                    <h2 className="font-bold text-gray-900 sora">Review & Confirm</h2>
-                    <p className="text-xs text-gray-400 mt-0.5">Check your details before confirming</p>
+                    <h2 className="font-bold text-gray-900 sora">Select Time</h2>
+                    <p className={`text-xs mt-0.5 transition-colors ${!selectedTime && stepError ? "text-red-500 font-medium" : "text-gray-400"}`}>
+                      {selectedTime ? selectedTime : "Choose an available slot"}
+                    </p>
                   </div>
                 </div>
               </div>
-
-              <div className="card-body divide-y divide-gray-50 space-y-0">
-                {[
-                  { label:"Appointment Type", icon:<Stethoscope className="w-4 h-4 text-green-600" />,  bg:"bg-green-100",
-                    value: reason === "checkup" ? "General Checkup" : "AI Prediction Follow-up",
-                    sub: reason === "prediction" && selectedReport ? `Linked: ${selectedReport.title || `Report #${selectedReport.id}`}` : undefined },
-                  { label:"Provider",         icon:<User className="w-4 h-4 text-blue-600" />,          bg:"bg-blue-100",
-                    value: selectedProvider ? selectedProvider.name : "Any available provider",
-                    sub: selectedProvider?.type },
-                  { label:"Date",             icon:<Calendar className="w-4 h-4 text-purple-600" />,    bg:"bg-purple-100", value: displayDate },
-                  { label:"Time",             icon:<Clock className="w-4 h-4 text-amber-600" />,        bg:"bg-amber-100",  value: selectedTime || "—" },
-                ].map(row => (
-                  <div key={row.label} className="flex items-start gap-4 py-4 first:pt-0 last:pb-0">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${row.bg}`}>{row.icon}</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{row.label}</p>
-                      <p className="font-bold text-gray-900 text-sm mt-0.5">{row.value}</p>
-                      {row.sub && <p className="text-xs text-gray-500 mt-0.5">{row.sub}</p>}
-                    </div>
-                    <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5 flex-shrink-0" />
-                  </div>
-                ))}
+              <div className="card-body">
+                <div className="grid grid-cols-4 gap-2">
+                  {TIME_SLOTS.map(slot => (
+                    <button key={slot} type="button" onClick={() => setSelectedTime(slot)}
+                      className={`rounded-xl py-2 text-xs font-semibold transition-all duration-150 border-2
+                        ${selectedTime === slot
+                          ? "border-green-500 bg-green-600 text-white shadow-md"
+                          : "border-gray-100 bg-white text-gray-700 hover:border-green-300 hover:bg-green-50"}`}>
+                      {slot}
+                    </button>
+                  ))}
+                </div>
               </div>
+            </div>
+
+            {/* Related Report (optional) */}
+            <div>
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                <FileText className="w-4 h-4" /> Related Report (Optional)
+              </label>
+              <select className="select-field" value={reportId}
+                onChange={(e) => setReportId(Number(e.target.value) || "")}>
+                <option value="">No report selected</option>
+                {reports.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.animal_type ? `${r.animal_type} Report` : `Report #${r.id}`}
+                    {r.symptom_text && ` - ${r.symptom_text.length > 40
+                      ? r.symptom_text.slice(0, 40) + "..." : r.symptom_text}`}
+                    {r.created_at && ` (${new Date(r.created_at).toLocaleDateString()})`}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="alert-card alert-card-blue">
@@ -626,6 +683,56 @@ export default function BookAppointment() {
           </div>
         )}
 
+        {/* ── STEP 3: Review ── */}
+        {step === 3 && (
+          <div className="card overflow-hidden animate-fadeIn">
+            <div className="card-header">
+              <div className="card-icon-header">
+                <div className="card-icon-wrap card-icon-green"><CheckCircle className="w-5 h-5 text-white" /></div>
+                <div>
+                  <h2 className="font-bold text-gray-900 sora">Review &amp; Confirm</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Check the details before booking</p>
+                </div>
+              </div>
+            </div>
+            <div className="card-body space-y-4">
+              {[
+                { icon: <Stethoscope className="w-4 h-4 text-green-600" />, label: "Visit Type",
+                  value: reason === "checkup" ? "General Checkup" : "AI Prediction Follow-up" },
+                { icon: <User className="w-4 h-4 text-green-600" />, label: "Provider",
+                  value: selectedProvider ? selectedProvider.name : "No preference (auto-assign)" },
+                { icon: <Calendar className="w-4 h-4 text-green-600" />, label: "Date", value: displayDate },
+                { icon: <Clock className="w-4 h-4 text-green-600" />,    label: "Time", value: selectedTime || "—" },
+                ...(selectedReport ? [{
+                  icon: <FileText className="w-4 h-4 text-green-600" />, label: "Linked Report",
+                  value: selectedReport.animal_type
+                    ? `${selectedReport.animal_type} Report`
+                    : `Report #${selectedReport.id}`,
+                }] : []),
+              ].map(({ icon, label, value }) => (
+                <div key={label} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                  <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">{icon}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-500">{label}</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate">{value}</p>
+                  </div>
+                  <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── INLINE STEP ERROR BANNER ──
+             Appears below the active step when validation fails or the API
+             returns an error. Auto-cleared when the user corrects the issue. */}
+        {stepError && (
+          <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl px-4 py-3 animate-fadeIn">
+            <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-700 font-medium">{stepError}</p>
+          </div>
+        )}
+
         {/* ── Nav buttons ── */}
         <div className="flex items-center justify-between pt-2 pb-6">
           {step > 0 ? (
@@ -636,7 +743,10 @@ export default function BookAppointment() {
           ) : <div />}
 
           {step < 3 ? (
-            <button type="button" onClick={next} disabled={!canNext}
+            /* FIX: the old `disabled={!canNext}` silently blocked the button with
+               no explanation. Continue is always enabled — validation runs inside
+               next() and surfaces the specific error via the banner above. */
+            <button type="button" onClick={next}
               className="btn btn-primary flex items-center gap-2">
               Continue <ChevronRight className="w-4 h-4" />
             </button>

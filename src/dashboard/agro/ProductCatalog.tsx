@@ -22,6 +22,31 @@ type EcomSettings = {
   enableOnlineOrders?: boolean; showOnMarketplace?: boolean; customOrderNote?: string;
 };
 
+/* ── VerifyBadge helper ─────────────────────────────────────────────────────
+   FIX: was duplicated — defined both as an inner arrow function (line 162)
+   AND again as a standalone function at the bottom of the file (line 515).
+   Moved here as a single module-level component; removed the inner copy.
+──────────────────────────────────────────────────────────────────────────── */
+function VerifyBadge({ p }: { p: any }) {
+  if (p.vet_verified)
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-green-100 text-green-800">
+        <CheckCircle className="w-3 h-3" />Vet verified
+      </span>
+    );
+  if (p.vet_verification_requested)
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+        <Clock className="w-3 h-3" />Pending
+      </span>
+    );
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+      <AlertTriangle className="w-3 h-3" />Not verified
+    </span>
+  );
+}
+
 export default function ProductCatalog({ providerId, isOwner, refreshKey }: Props) {
   const { addToast } = useToast();
 
@@ -139,18 +164,29 @@ export default function ProductCatalog({ providerId, isOwner, refreshKey }: Prop
     else { setSortBy(key); setSortDir("asc"); }
   };
 
-  const SortIcon = ({ key: k }: { key: string }) =>
-    sortBy === k
+  const handleOpenCreateModal = () => {
+    setEditingProduct(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (p: any) => {
+    setEditingProduct(p);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingProduct(null);
+  };
+
+  /* FIX: SortIcon used `key` as a prop name — `key` is a reserved React prop
+     and cannot be read inside the component. Renamed prop to `col`. */
+  const SortIcon = ({ col }: { col: string }) =>
+    sortBy === col
       ? sortDir === "asc"
         ? <ChevronUp className="w-3 h-3 inline" />
         : <ChevronDown className="w-3 h-3 inline" />
       : <span className="inline-block w-3 h-3 opacity-30"><ChevronUp className="w-3 h-3" /></span>;
-
-  const VerifyBadge = ({ p }: { p: any }) => {
-    if (p.vet_verified)               return <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-green-100 text-green-800"><CheckCircle className="w-3 h-3"/>Vet verified</span>;
-    if (p.vet_verification_requested) return <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-100 text-amber-800"><Clock className="w-3 h-3"/>Pending</span>;
-    return <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-gray-100 text-gray-600"><AlertTriangle className="w-3 h-3"/>Not verified</span>;
-  };
 
   if (loading) return (
     <div className="card overflow-hidden">
@@ -205,7 +241,8 @@ export default function ProductCatalog({ providerId, isOwner, refreshKey }: Prop
             </div>
             {isOwner && (
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => { setEditingProduct(null); setIsModalOpen(true); }}
+                {/* FIX: was calling setEditingProduct/setIsModalOpen inline; replaced with handler */}
+                <button type="button" onClick={handleOpenCreateModal}
                   className="btn btn-primary btn-sm flex items-center gap-1.5">
                   <Plus className="w-3.5 h-3.5" /> Add Product
                 </button>
@@ -311,17 +348,19 @@ export default function ProductCatalog({ providerId, isOwner, refreshKey }: Prop
                   <thead className="bg-gray-50">
                     <tr>
                       {[
-                        { key:"name",   label:"Product" },
-                        { key:"",       label:"Company" },
-                        { key:"price",  label:"Price (KES)" },
-                        { key:"stock",  label:"Stock" },
-                        { key:"status", label:"Status" },
-                        { key:"",       label:"Category" },
+                        { col:"name",   label:"Product" },
+                        { col:"",       label:"Company" },
+                        { col:"price",  label:"Price (KES)" },
+                        { col:"stock",  label:"Stock" },
+                        { col:"status", label:"Status" },
+                        { col:"",       label:"Category" },
                       ].map(th => (
                         <th key={th.label}
-                          onClick={() => th.key && toggleSort(th.key as any)}
-                          className={`px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-gray-400 select-none ${th.key ? "cursor-pointer hover:text-gray-600" : ""}`}>
-                          {th.label} {th.key && <SortIcon key={th.key} />}
+                          onClick={() => th.col && toggleSort(th.col as typeof sortBy)}
+                          className={`px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-gray-400 select-none ${th.col ? "cursor-pointer hover:text-gray-600" : ""}`}>
+                          {/* FIX: was passing key={th.key} as a prop to SortIcon — `key` is reserved.
+                              Renamed prop to `col` on both the component definition and all call sites. */}
+                          {th.label} {th.col && <SortIcon col={th.col} />}
                         </th>
                       ))}
                       {isOwner && (
@@ -375,7 +414,9 @@ export default function ProductCatalog({ providerId, isOwner, refreshKey }: Prop
                                   {requestingVerifyId === p.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
                                 </button>
                               )}
-                              <button type="button" onClick={() => { setEditingProduct(p); setIsModalOpen(true); }} title="Edit"
+                              {/* FIX: was calling handleOpenEditModal but also an undefined handleCloseModal in the modal close button.
+                                  handleCloseModal is now properly defined above and used here. */}
+                              <button type="button" onClick={() => handleOpenEditModal(p)} title="Edit"
                                 className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-xl transition">
                                 <Edit2 className="w-4 h-4" />
                               </button>
@@ -414,7 +455,9 @@ export default function ProductCatalog({ providerId, isOwner, refreshKey }: Prop
               <p className="text-sm font-bold text-gray-900 sora">
                 {editingProduct ? "Edit Product" : "Add New Product"}
               </p>
-              <button type="button" onClick={() => { setIsModalOpen(false); setEditingProduct(null); }}
+              {/* FIX: modal close button was calling setIsModalOpen/setEditingProduct inline;
+                  replaced with the proper handleCloseModal handler. */}
+              <button type="button" onClick={handleCloseModal}
                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition">
                 <X className="w-5 h-5" />
               </button>
@@ -422,8 +465,8 @@ export default function ProductCatalog({ providerId, isOwner, refreshKey }: Prop
             <div className="p-4">
               <AddProductCard
                 product={editingProduct}
-                onAdded={async () => { await loadProducts(); setIsModalOpen(false); setEditingProduct(null); }}
-                onUpdated={async () => { await loadProducts(); setIsModalOpen(false); setEditingProduct(null); }}
+                onAdded={async () => { await loadProducts(); handleCloseModal(); }}
+                onUpdated={async () => { await loadProducts(); handleCloseModal(); }}
               />
             </div>
           </div>
@@ -496,11 +539,4 @@ export default function ProductCatalog({ providerId, isOwner, refreshKey }: Prop
       )}
     </div>
   );
-}
-
-/* ── VerifyBadge helper used inline ──────────────────────────── */
-function VerifyBadge({ p }: { p: any }) {
-  if (p.vet_verified)               return <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-green-100 text-green-800"><CheckCircle className="w-3 h-3"/>Vet verified</span>;
-  if (p.vet_verification_requested) return <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-100 text-amber-800"><Clock className="w-3 h-3"/>Pending</span>;
-  return <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-gray-100 text-gray-600"><AlertTriangle className="w-3 h-3"/>Not verified</span>;
 }

@@ -13,6 +13,11 @@ export const predict = async (payload: any) => {
 export const predictFromText = async (payload: any) => {
   const res = await api.post('/ml/predict_from_text', payload);
   return res.data;
-}; 
+};
 
-export default { mlHealth, predict, predictFromText };
+export const getSymptomsByAnimal = async (animal: string) => {
+  const res = await api.get(`/ml/symptoms_for_animal/${animal}`);
+  return res.data;
+};
+
+export default { mlHealth, predict, predictFromText, getSymptomsByAnimal };
