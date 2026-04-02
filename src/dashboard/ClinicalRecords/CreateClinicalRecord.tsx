@@ -12,7 +12,6 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
 import Layout from "../../components/Layout";
 import { useToast } from "../../context/ToastContext";
 import {
@@ -21,6 +20,7 @@ import {
   PawPrint, Microscope, BarChart3, X,
   Shield, Sparkles,
 } from "lucide-react";
+import api from "../../api/axios";
 
 /* ── Confidence colour helper ─────────────────────────────────── */
 function confidenceColor(v: number) {
@@ -92,9 +92,7 @@ export const CreateClinicalRecord: React.FC = () => {
 
     const fetchVets = async () => {
       try {
-        const res = await axios.get("/api/users?role=vet", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+        const res = await api.get("/users?role=vet");
         const data = res.data?.data ?? res.data;
         setVets(Array.isArray(data) ? data : []);
       } catch { addToast("warning", "Vets", "Could not load veterinarian list"); }
@@ -102,9 +100,7 @@ export const CreateClinicalRecord: React.FC = () => {
 
     const fetchAnimals = async () => {
       try {
-        const res = await axios.get("/api/animal", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+        const res = await api.get("/animal");
         setAnimals(res.data);
       } catch { addToast("warning", "Animals", "Could not load animal list"); }
     };
@@ -128,7 +124,7 @@ export const CreateClinicalRecord: React.FC = () => {
     if (!regNo.trim()) { addToast("error", "Validation", "Please enter a registration number"); return; }
     setSearchLoading(true);
     try {
-      const res = await axios.get(`/api/animal/search?reg_no=${encodeURIComponent(regNo)}`, {
+      const res = await api.get(`/animal/search?reg_no=${encodeURIComponent(regNo)}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       if (res.data) {
@@ -185,14 +181,14 @@ export const CreateClinicalRecord: React.FC = () => {
 
     setLoading(true);
     try {
-      await axios.post("/api/clinical-records", {
-        animalId,
-        ...(userRole !== "vet" && { vetId: Number(finalVetId) }),
+      await api.post("/clinical-records", {
+        animalId: Number(animalId),
+        vetId: Number(finalVetId),
         mlDiagnosis:  formData.mlDiagnosis,
         mlConfidence: formData.mlConfidence || 0,
-        vetDiagnosis: formData.vetDiagnosis || null,
-        notes:        formData.notes || null,
-      }, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+        vetDiagnosis: formData.vetDiagnosis || "",
+        notes:        formData.notes || "",
+      });
 
       addToast("success", "Created", "Clinical record created successfully");
       setTimeout(() => navigate("/clinical-records"), 900);

@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../api/axios";
 import Layout from "../../components/Layout";
 import { useToast } from "../../context/ToastContext";
 import {
@@ -78,9 +78,7 @@ export const ClinicalRecordDetail: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const res = await axios.get(`/api/clinical-records/${recordId}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+        const res = await api.get(`/clinical-records/${recordId}`);
         setRecord(res.data);
       } catch (err: any) {
         addToast("error", "Error", err?.response?.data?.error || "Failed to fetch record");

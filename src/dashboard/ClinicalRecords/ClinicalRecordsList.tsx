@@ -4,7 +4,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import Layout from "../../components/Layout";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import api from "../../api/axios";
 import type { ClinicalRecordResponse } from "../../types/clinical.types";
 import { useToast } from "../../context/ToastContext";
 import {
@@ -69,9 +69,7 @@ export default function ClinicalRecordsList() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await axios.get("/api/clinical-records", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await api.get("/clinical-records");
         const data = res.data?.data ?? res.data;
         setRecords(Array.isArray(data) ? data : []);
         if (!Array.isArray(data)) addToast("warning", "Data", "Unexpected response format");
